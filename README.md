@@ -21,7 +21,7 @@ HK Toss MLOps - Project
 
 1. Commit Message Template
     ```shell
-    $ git config commit.template=.gitmessage.txt
+    $ git config commit.template .gitmessage.txt
     ```
 2. Python - Conda, Jupyter
     - [Anaconda3 설치](https://docs.anaconda.com/anaconda/install/windows/)
