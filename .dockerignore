@@ -1,0 +1,16 @@
+# Versioning and metadata
+.git
+.github
+.gitignore
+.dockerignore
+
+# Temp directory
+.temp
+.tmp
+
+# Bind mounts
+.pgdata
+
+# Extras
+.DS_Store
+*.md
