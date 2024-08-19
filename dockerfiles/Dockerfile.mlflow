@@ -1,0 +1,8 @@
+FROM amd64/python:3.10-slim
+
+# Working Directory
+WORKDIR /mlflow
+
+# Install Dependencies
+RUN pip install -U pip --upgrade pip &&\
+    pip install mlflow

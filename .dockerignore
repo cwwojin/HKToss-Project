@@ -11,6 +11,9 @@
 # Bind mounts
 .pgdata
 
+# MLFlow
+.mlflow-data
+
 # Extras
 .DS_Store
 *.md
