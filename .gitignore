@@ -161,5 +161,13 @@ cython_debug/
 # Bind Mounts
 .pgdata/
 
+# Airflow
+airflow/logs
+airflow/plugins
+airflow/config
+
+# MLFlow
+.mlflow-data/
+
 # Extras
 .DS_Store

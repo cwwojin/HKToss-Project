@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "hktoss-package"
+name = "hktoss_package"
 version = "0.1.0"
 description = "HKToss MLOps - Midterm Project"
 authors = ["Your Name <you@example.com>"]
