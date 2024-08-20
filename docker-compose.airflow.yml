@@ -273,7 +273,7 @@ services:
         <<: *airflow-common
         command: celery flower
         profiles:
-            - complete
+            - all
             - flower
         ports:
             - "5555:5555"
@@ -302,13 +302,15 @@ services:
             - 5001:5001
         volumes:
             - ./.mlflow-data:/mlflow
+        env_file: .env
         command:
             - /bin/sh
             - -c
             - |
                 mlflow server -p 5001 \
                 --backend-store-uri sqlite:///mlflow.db \
+                --default-artifact-root s3://${AWS_BUCKET_NAME}/ \
                 --host 0.0.0.0
         profiles:
-            - complete
+            - all
             - mlflow
