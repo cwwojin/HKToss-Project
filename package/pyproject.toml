@@ -4,11 +4,16 @@ version = "0.1.0"
 description = "HKToss MLOps - Midterm Project"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+scikit-learn = "^1.5.1"
+mlflow = "^2.15.1"
+skl2onnx = "^1.17.0"
 
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
 
 [build-system]
 requires = ["poetry-core"]
