@@ -21,6 +21,3 @@ services:
                 --backend-store-uri sqlite:///mlflow.db \
                 --default-artifact-root s3://${AWS_BUCKET_NAME}/ \
                 --host 0.0.0.0
-        profiles:
-            - all
-            - mlflow

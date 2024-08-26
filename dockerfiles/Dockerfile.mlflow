@@ -5,4 +5,4 @@ WORKDIR /mlflow
 
 # Install Dependencies
 RUN pip install -U pip --upgrade pip &&\
-    pip install mlflow==2.15.1
+    pip install mlflow==2.15.1 boto3
