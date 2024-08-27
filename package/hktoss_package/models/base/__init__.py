@@ -1,1 +1,1 @@
-from .baseModel import BaseSKLearnModel
+from .baseModel import BaseSKLearnModel, BaseSKLearnPipeline

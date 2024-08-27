@@ -1,20 +1,26 @@
 import mlflow
 import os
 import os.path as path
-from hktoss_package.models.base import BaseSKLearnModel
+from hktoss_package.models.base import BaseSKLearnPipeline
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from pandas import DataFrame
 from yacs.config import CfgNode as CN
-from hktoss_package.models import LogisticRegressionModel
+from hktoss_package.models import (
+    LogisticRegressionModel,
+    LogisticRegressionPipeline,
+    RandomForestClassifierModel,
+    XGBClassifierModel,
+    LGBMClassifierModel,
+    CatBoostClassifierModel,
+    MLPClassifierModel,
+)
 from datetime import datetime
 
 
 class MLFlowTrainer:
     tracking_uri: str
     config: CN
-    model: type[BaseSKLearnModel]
 
     def __init__(self, tracking_uri: str, config: CN, **kwargs) -> None:
         self.model = None
@@ -28,7 +34,17 @@ class MLFlowTrainer:
     def prepare_model(self):
         model_name = f"{self.config.MODEL_TYPE}"
         if self.config.MODEL_TYPE == "logistic":
-            model = LogisticRegressionModel(model_name)
+            model = LogisticRegressionPipeline(model_name)
+        elif self.config.MODEL_TYPE == "randomforest":
+            model = RandomForestClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "xgboost":
+            model = XGBClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "lightgbm":
+            model = LGBMClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "catboost":
+            model = CatBoostClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "mlp":
+            model = MLPClassifierModel(model_name)
         else:
             raise NotImplementedError(f"unrecognized model : {self.config.MODEL_TYPE}")
 
@@ -52,16 +68,6 @@ class MLFlowTrainer:
             random_state=self.config.DATASET.RANDOM_STATE,
             stratify=df_y,
         )
-
-        # Scaler
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
-        self.scaler = scaler
-
-        # PCA
-        if self.config.PCA_ENABLED:
-            raise NotImplementedError("PCA not yet implemented.")
 
         return X_train, X_test, y_train, y_test
 
@@ -88,7 +94,7 @@ class MLFlowTrainer:
             log_datasets=False,
             disable=False,
         )
-        run_name = f"{self.config.LOGGER.RUN_NAME if self.config.LOGGER.RUN_NAME else ''}_{timestamp}"
+        run_name = f"{self.config.LOGGER.RUN_NAME if self.config.LOGGER.RUN_NAME else 'run'}_{timestamp}"
         with mlflow.start_run(run_name=run_name):
             # Train
             self.model.fit(X_train, y_train)
@@ -111,7 +117,6 @@ class MLFlowTrainer:
 
             self.model.export_pkl(model_path)
             mlflow.log_artifact(model_path, artifact_path="model_pkl")
-            mlflow.log_params(self.model.model.get_params())
 
             # Delete cached model
             os.remove(model_path)
