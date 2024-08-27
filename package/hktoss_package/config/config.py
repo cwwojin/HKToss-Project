@@ -27,7 +27,15 @@ _C.MODEL_TYPE = "logistic"
 
 _C.LOGISTIC = CN()
 
+_C.RANDOMFOREST = CN()
+
 _C.XGBOOST = CN()
+
+_C.LIGHTGBM = CN()
+
+_C.CATBOOST = CN()
+
+_C.MLP = CN()
 
 # ======================================================== #
 # Experiment Config                                        #

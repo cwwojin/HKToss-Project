@@ -6,14 +6,21 @@ from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from pandas import DataFrame
 from yacs.config import CfgNode as CN
-from hktoss_package.models import LogisticRegressionPipeline
+from hktoss_package.models import (
+    LogisticRegressionModel,
+    LogisticRegressionPipeline,
+    RandomForestClassifierModel,
+    XGBClassifierModel,
+    LGBMClassifierModel,
+    CatBoostClassifierModel,
+    MLPClassifierModel,
+)
 from datetime import datetime
 
 
 class MLFlowTrainer:
     tracking_uri: str
     config: CN
-    model: type[BaseSKLearnPipeline]
 
     def __init__(self, tracking_uri: str, config: CN, **kwargs) -> None:
         self.model = None
@@ -28,6 +35,16 @@ class MLFlowTrainer:
         model_name = f"{self.config.MODEL_TYPE}"
         if self.config.MODEL_TYPE == "logistic":
             model = LogisticRegressionPipeline(model_name)
+        elif self.config.MODEL_TYPE == "randomforest":
+            model = RandomForestClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "xgboost":
+            model = XGBClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "lightgbm":
+            model = LGBMClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "catboost":
+            model = CatBoostClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "mlp":
+            model = MLPClassifierModel(model_name)
         else:
             raise NotImplementedError(f"unrecognized model : {self.config.MODEL_TYPE}")
 

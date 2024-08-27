@@ -15,6 +15,9 @@ python-dotenv = "^1.0.1"
 yacs = "^0.1.8"
 boto3 = "^1.35.5"
 setuptools = "^73.0.1"
+xgboost = "2.1.1"
+lightgbm = "4.5.0"
+catboost = "^1.2.5"
 
 
 [tool.poetry.group.dev.dependencies]
