@@ -1,0 +1,13 @@
+DATASET:
+  PATH: .tmp/dataset/train_set_demo_removed.csv
+  TEST_SIZE: 0.2
+  RANDOM_STATE: 42
+  ID_COL_NAME: SK_ID_CURR
+  TARGET_COL_NAME: TARGET
+PCA_ENABLED: false
+PCA:
+  N_COMPONENTS: 100
+MODEL_TYPE: logistic
+LOGGER:
+  EXPERIMENT_NAME: logistic_regression
+  RUN_NAME: run_logistic_regression
