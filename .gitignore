@@ -169,5 +169,8 @@ airflow/config
 # MLFlow
 .mlflow-data/
 
+# Catboost
+catboost_info/
+
 # Extras
 .DS_Store

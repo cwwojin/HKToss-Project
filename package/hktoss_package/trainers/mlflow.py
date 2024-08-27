@@ -7,7 +7,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from pandas import DataFrame
 from yacs.config import CfgNode as CN
-from hktoss_package.models import LogisticRegressionModel
+from hktoss_package.models import (
+    LogisticRegressionModel,
+    RandomForestClassifierModel,
+    XGBClassifierModel,
+    LGBMClassifierModel,
+    CatBoostClassifierModel,
+    MLPClassifierModel,
+)
 from datetime import datetime
 
 
@@ -29,6 +36,16 @@ class MLFlowTrainer:
         model_name = f"{self.config.MODEL_TYPE}"
         if self.config.MODEL_TYPE == "logistic":
             model = LogisticRegressionModel(model_name)
+        elif self.config.MODEL_TYPE == "randomforest":
+            model = RandomForestClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "xgboost":
+            model = XGBClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "lightgbm":
+            model = LGBMClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "catboost":
+            model = CatBoostClassifierModel(model_name)
+        elif self.config.MODEL_TYPE == "mlp":
+            model = MLPClassifierModel(model_name)
         else:
             raise NotImplementedError(f"unrecognized model : {self.config.MODEL_TYPE}")
 
