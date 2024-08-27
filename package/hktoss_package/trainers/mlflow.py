@@ -3,56 +3,124 @@ import os
 import os.path as path
 from hktoss_package.models.base import BaseSKLearnModel
 from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from pandas import DataFrame
+from yacs.config import CfgNode as CN
+from hktoss_package.models import LogisticRegressionModel
+from datetime import datetime
 
 
 class MLFlowTrainer:
     tracking_uri: str
+    config: CN
+    model: type[BaseSKLearnModel]
 
-    def __init__(self, tracking_uri: str = "Databricks", **kwargs) -> None:
+    def __init__(self, tracking_uri: str, config: CN, **kwargs) -> None:
+        self.model = None
+        self.config = config
         self.tracking_uri = tracking_uri
         if tracking_uri == "databricks":
             mlflow.login(backend="databricks")
         else:
             mlflow.set_tracking_uri(tracking_uri)
 
-    def run_experiment(
-        self, model: type[BaseSKLearnModel], X_train, y_train, X_test, y_test
-    ):
-        mlflow.set_experiment(f"{model.config['model_name']}")
+    def prepare_model(self):
+        model_name = f"{self.config.MODEL_TYPE}"
+        if self.config.MODEL_TYPE == "logistic":
+            model = LogisticRegressionModel(model_name)
+        else:
+            raise NotImplementedError(f"unrecognized model : {self.config.MODEL_TYPE}")
+
+        self.model = model
+
+    def prepare_data(self, df: DataFrame):
+        id_col = self.config.DATASET.ID_COL_NAME
+        target_col = self.config.DATASET.TARGET_COL_NAME
+        self.dataframe = df.set_index(id_col)
+
+        # column selection, ordering
+        df_y = self.dataframe[target_col]
+        df_x = self.dataframe.drop(columns=[target_col])
+        df_x = df_x[sorted(list(df_x.columns))]
+
+        # dataset split
+        X_train, X_test, y_train, y_test = train_test_split(
+            df_x,
+            df_y,
+            test_size=self.config.DATASET.TEST_SIZE,
+            random_state=self.config.DATASET.RANDOM_STATE,
+            stratify=df_y,
+        )
+
+        # Scaler
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+        self.scaler = scaler
+
+        # PCA
+        if self.config.PCA_ENABLED:
+            raise NotImplementedError("PCA not yet implemented.")
+
+        return X_train, X_test, y_train, y_test
+
+    def run_experiment(self, dataframe: DataFrame):
+        # load model
+        if not self.model:
+            self.prepare_model()
+
+        # prepare dataset
+        X_train, X_test, y_train, y_test = self.prepare_data(df=dataframe)
+
+        # init experiment
+        timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
+        mlflow.set_experiment(
+            experiment_name=(
+                self.config.LOGGER.EXPERIMENT_NAME
+                if self.config.LOGGER.EXPERIMENT_NAME
+                else f"{self.config.MODEL_TYPE}"
+            )
+        )
         mlflow.autolog(
-            log_datasets=True,
             log_model_signatures=True,
-            log_models=True,
+            log_models=False,
+            log_datasets=False,
             disable=False,
         )
-        with mlflow.start_run():
+        run_name = f"{self.config.LOGGER.RUN_NAME if self.config.LOGGER.RUN_NAME else ''}_{timestamp}"
+        with mlflow.start_run(run_name=run_name):
             # Train
-            model.fit(X_train, y_train)
+            self.model.fit(X_train, y_train)
 
             # Evaluation
-            y_pred = model.predict(X_test)
-            y_pred_proba = model.predict_proba(X_test)[:, 1]
+            y_pred = self.model.predict(X_test)
+            y_pred_proba = self.model.predict_proba(X_test)[:, 1]
             metrics = {
-                "f1_score": f1_score(y_test, y_pred),
-                "roc_auc_score": roc_auc_score(y_test, y_pred_proba),
+                "test_f1_score": f1_score(y_test, y_pred),
+                "test_roc_auc_score": roc_auc_score(y_test, y_pred_proba),
             }
             mlflow.log_metrics(metrics)
 
             # Log model & artifacts to MLFlow
-            model_path = f"{model.config['model_name']}.pkl"
+            model_file = f"{self.model.model_name}.pkl"
             save_dir = ".cache"
+            model_path = path.join(save_dir, model_file)
             if not path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
-            model.export_pkl(save_dir=save_dir, model_name=model_path)
-            mlflow.log_artifact(path.join(save_dir, model_path), artifact_path="models")
-            mlflow.log_params(model.model.get_params())
 
-            # Log the sklearn model and register as version 1
+            self.model.export_pkl(model_path)
+            mlflow.log_artifact(model_path, artifact_path="model_pkl")
+            mlflow.log_params(self.model.model.get_params())
+
+            # Delete cached model
+            os.remove(model_path)
+
+            # Log the sklearn model and register
             mlflow.sklearn.log_model(
-                sk_model=model,
-                artifact_path="sklearn-model",
-                input_example=X_train,
-                registered_model_name=model.config["model_name"],
+                sk_model=self.model,
+                artifact_path="registered-model",
+                registered_model_name=self.model.model_name,
             )
 
         # Turn OFF logger until next run

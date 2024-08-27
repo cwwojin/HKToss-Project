@@ -1,21 +1,15 @@
 from sklearn.base import BaseEstimator
-import os.path as path
 import pickle
 from skl2onnx import convert_sklearn
-from yacs.config import CfgNode as CN
 
 
 class BaseSKLearnModel:
     model: type[BaseEstimator]
-    config: CN
+    model_name: str
 
-    def __init__(self, config: CN, **kwargs):
+    def __init__(self, model_name: str, **kwargs):
         self.model = None
-        self.config = config
-        self.config["model_name"] = self._set_model_name()
-
-    def _set_model_name(self):
-        return f"{self.config.MODEL_TYPE}"
+        self.model_name = model_name
 
     def fit(self, X, y=None, **kwargs):
         return self.model.fit(X, y)
@@ -26,10 +20,9 @@ class BaseSKLearnModel:
     def predict_proba(self, X, **kwargs):
         return self.model.predict_proba(X)
 
-    def export_pkl(self, save_dir=".", model_name="model.pkl", **kwargs):
+    def export_pkl(self, path: str, **kwargs):
         """Export a model to file via Pickle."""
-
-        with open(path.join(save_dir, model_name), "wb") as f:
+        with open(path, "wb") as f:
             pickle.dump(self.model, f)
 
     def export_onnx(self, name: str, initial_types=None, options=None, **kwargs):

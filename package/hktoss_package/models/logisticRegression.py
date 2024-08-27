@@ -4,6 +4,6 @@ from yacs.config import CfgNode as CN
 
 
 class LogisticRegressionModel(BaseSKLearnModel):
-    def __init__(self, config: CN):
-        super().__init__(config)
+    def __init__(self, model_name: str):
+        super().__init__(model_name)
         self.model = LogisticRegression()
