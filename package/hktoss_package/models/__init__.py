@@ -1,1 +1,1 @@
-from .logisticRegression import LogisticRegressionModel
+from .logisticRegression import LogisticRegressionModel, LogisticRegressionPipeline

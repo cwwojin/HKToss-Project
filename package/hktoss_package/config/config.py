@@ -35,7 +35,7 @@ _C.XGBOOST = CN()
 
 # Logger
 _C.LOGGER = CN()
-_C.LOGGER.EXPERIMENT_NAME = "experiment"
+_C.LOGGER.EXPERIMENT_NAME = None
 _C.LOGGER.RUN_NAME = None
 
 
