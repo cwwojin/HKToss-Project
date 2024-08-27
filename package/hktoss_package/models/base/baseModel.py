@@ -3,9 +3,7 @@ from abc import abstractmethod
 
 from skl2onnx import convert_sklearn
 from sklearn.base import BaseEstimator
-from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
 
 class BaseSKLearnModel:
@@ -46,8 +44,6 @@ class BaseSKLearnPipeline:
         self.model = None
         self.pipeline = None
         self.model_name = model_name
-        self.scaler = StandardScaler()
-        self.pca = PCA()
 
     @abstractmethod
     def build_pipe(self):

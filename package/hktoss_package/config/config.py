@@ -14,10 +14,6 @@ _C.DATASET.RANDOM_STATE = 42
 _C.DATASET.ID_COL_NAME = "SK_ID_CURR"
 _C.DATASET.TARGET_COL_NAME = "TARGET"
 
-_C.PCA_ENABLED = False
-_C.PCA = CN()
-_C.PCA.N_COMPONENTS = 100  # Temp
-
 # ======================================================== #
 # Model Config                                             #
 # ======================================================== #
@@ -25,21 +21,31 @@ _C.PCA.N_COMPONENTS = 100  # Temp
 # Default : logistic
 _C.MODEL_TYPE = "logistic"
 
+# Logistic Regression
 _C.LOGISTIC = CN()
 
+# Random Forest
 _C.RANDOMFOREST = CN()
 
+# XGBoost
 _C.XGBOOST = CN()
 
+# LightGBM
 _C.LIGHTGBM = CN()
 
+# CatBoost
 _C.CATBOOST = CN()
 
+# MLP
 _C.MLP = CN()
 
 # ======================================================== #
 # Experiment Config                                        #
 # ======================================================== #
+
+# Grid Search
+_C.GRID_SEARCH = True
+_C.PCA = CN()
 
 # Logger
 _C.LOGGER = CN()
