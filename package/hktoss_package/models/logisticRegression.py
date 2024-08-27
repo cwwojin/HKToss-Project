@@ -1,7 +1,8 @@
+from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
+from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
-from yacs.config import CfgNode as CN
+from sklearn.preprocessing import StandardScaler
 
 
 class LogisticRegressionModel(BaseSKLearnModel):
@@ -17,6 +18,8 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
         self.pipeline = self.build_pipe()
 
     def build_pipe(self):
+        self.scaler = StandardScaler()
+        self.pca = PCA()
         return Pipeline(
             steps=[
                 ("scaler", self.scaler),
