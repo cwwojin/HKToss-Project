@@ -7,3 +7,10 @@ DATASET:
 MODEL_TYPE: logistic
 GRID_SEARCH: true
 MULTIPROCESSING: true
+PCA:
+  N_COMPONENTS: [5]
+LOGISTIC:
+  C: [0.1]
+  penalty: ["l1", "l2"]
+  solver: ["sag"]
+  max_iter: [100]

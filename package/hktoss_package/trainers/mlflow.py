@@ -1,8 +1,10 @@
 import os
 import os.path as path
 from datetime import datetime
+import json
 
 import mlflow
+from mlflow.client import MlflowClient
 from hktoss_package.models import (
     CatBoostPipeline,
     LGBMPipeline,
@@ -30,6 +32,7 @@ class MLFlowTrainer:
             mlflow.login(backend="databricks")
         else:
             mlflow.set_tracking_uri(tracking_uri)
+        self.client = MlflowClient(mlflow.get_tracking_uri())
 
     def _get_param_grid(self):
         if self.config:
@@ -157,9 +160,13 @@ class MLFlowTrainer:
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
-        mlflow.set_experiment(
-            experiment_name=f"{self.config.LOGGER.EXPERIMENT_NAME if self.config.LOGGER.EXPERIMENT_NAME else self.config.MODEL_TYPE}_gridsearch"
-        )
+        experiment_name = f"{self.config.LOGGER.EXPERIMENT_NAME if self.config.LOGGER.EXPERIMENT_NAME else self.config.MODEL_TYPE}_gridsearch"
+        try:
+            experiment_id = mlflow.create_experiment(experiment_name)
+        except:
+            experiment_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
+
+        mlflow.set_experiment(experiment_id=experiment_id)
         mlflow.autolog(
             log_model_signatures=True,
             log_models=False,
@@ -172,8 +179,7 @@ class MLFlowTrainer:
             # Init grid search
             param_grid = self._get_param_grid()
             if hasattr(self.model, "pca"):
-                param_grid["pca__n_components"] = self.config.PCA.N_COMPONENTS
-
+                param_grid["pca__n_components"] = self.config.PCA.N_COMPONENTS + [None]
             search = GridSearchCV(
                 self.model.pipeline,  # Fit to model.pipeline, not model
                 param_grid,
@@ -187,14 +193,19 @@ class MLFlowTrainer:
                 refit="f1_score",
                 n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
             )
+
+            # Fit
             search.fit(X, y)
 
             # Save only the best estimator
             self.model.pipeline = search.best_estimator_
 
-            # Evaluation
-            mlflow.log_metrics({"f1_score_best": search.best_score_})
+            # Log model & experiment info
+            mlflow.log_params(dict(self.config))
             mlflow.log_params(search.best_params_)
+
+            # Log evaluation metrics
+            mlflow.log_metrics({"f1_score_best": search.best_score_})
             save_dir = ".cache"
             if not path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
@@ -219,6 +230,50 @@ class MLFlowTrainer:
                 artifact_path="registered-model",
                 registered_model_name=self.model_name,
             )
+
+            # Register the model only if score is improved
+            prev_version = self.client.get_latest_versions(self.model_name)[0]
+            prev_best = (
+                prev_version.tags["f1_score"] if "f1_score" in prev_version.tags else 0
+            )
+
+            if search.best_score_ > prev_best:
+                print(
+                    "Trained model is better than the latest version. Saving model to the registry.."
+                )
+
+                # Log the sklearn model and register
+                mlflow.sklearn.log_model(
+                    sk_model=self.model.pipeline,
+                    artifact_path="registered-model",
+                    registered_model_name=self.model_name,
+                )
+                # Add Tags to registered model
+                model_info = self.client.get_latest_versions(self.model_name)[0]
+                self.client.set_model_version_tag(
+                    name=self.model_name,
+                    version=model_info.version,
+                    key="f1_score",
+                    value=search.best_score_,
+                )
+                self.client.set_model_version_tag(
+                    name=self.model_name,
+                    version=model_info.version,
+                    key="params",
+                    value=json.dumps(search.best_params_),
+                )
+                self.client.set_model_version_tag(
+                    name=self.model_name,
+                    version=model_info.version,
+                    key="config",
+                    value=json.dumps(dict(self.config)),
+                )
+            else:
+                # Log the sklearn model, but NOT register
+                mlflow.sklearn.log_model(
+                    sk_model=self.model.pipeline,
+                    artifact_path="registered-model",
+                )
 
         # Turn OFF logger until next run
         mlflow.autolog(disable=True)
