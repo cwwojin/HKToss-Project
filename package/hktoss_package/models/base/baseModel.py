@@ -52,7 +52,7 @@ class BaseSKLearnPipeline:
         pass
 
     @abstractmethod
-    def build_pipe_transformer(self, column_type, **kwargs):
+    def build_pipe_transformer(self, **kwargs):
         pass
 
     def get_params(self, **kwargs):

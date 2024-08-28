@@ -45,20 +45,22 @@ class MLFlowTrainer:
             param_grid = dict(self.config[self.config.MODEL_TYPE.upper()])
             return {f"classifier__{k}": v for k, v in param_grid.items()}
 
-    def prepare_model(self, column_type=None):
+    def prepare_model(
+        self,
+    ):
         self.model_name = f"{self.config.MODEL_TYPE}"
         if self.config.MODEL_TYPE == "logistic":
-            model = LogisticRegressionPipeline(column_type=column_type)
+            model = LogisticRegressionPipeline()
         elif self.config.MODEL_TYPE == "randomforest":
-            model = RandomForestPipeline(column_type=column_type)
+            model = RandomForestPipeline()
         elif self.config.MODEL_TYPE == "xgboost":
-            model = XGBPipeline(column_type=column_type)
+            model = XGBPipeline()
         elif self.config.MODEL_TYPE == "lightgbm":
-            model = LGBMPipeline(column_type=column_type)
+            model = LGBMPipeline()
         elif self.config.MODEL_TYPE == "catboost":
-            model = CatBoostPipeline(column_type=column_type)
+            model = CatBoostPipeline()
         elif self.config.MODEL_TYPE == "mlp":
-            model = MLPPipeline(column_type=column_type)
+            model = MLPPipeline()
         else:
             raise NotImplementedError(f"unrecognized model : {self.config.MODEL_TYPE}")
 
@@ -133,7 +135,11 @@ class MLFlowTrainer:
 
         # load model
         if not self.model:
-            self.prepare_model(column_type=column_types)
+            self.prepare_model()
+
+        self.model.pipeline = self.model.build_pipe_transformer(
+            column_types=column_types
+        )
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
@@ -194,7 +200,11 @@ class MLFlowTrainer:
 
         # load model
         if not self.model:
-            self.prepare_model(column_type=column_types)
+            self.prepare_model()
+
+        self.model.pipeline = self.model.build_pipe_transformer(
+            column_types=column_types
+        )
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")

@@ -16,11 +16,7 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
     def __init__(self, column_type=None, **kwargs):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
-        # 파이프라인을 초기화합니다.
-        if column_type:
-            self.pipeline = self.build_pipe_transformer(column_type=column_type)
-        else:
-            self.pipeline = self.build_pipe()
+        self.pipeline = self.build_pipe_transformer(column_type)
 
     # pipeline
     def build_pipe(self):
