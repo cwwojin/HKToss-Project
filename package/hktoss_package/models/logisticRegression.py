@@ -14,8 +14,8 @@ class LogisticRegressionModel(BaseSKLearnModel):
 
 
 class LogisticRegressionPipeline(BaseSKLearnPipeline):
-    def __init__(self, model_name: str):
-        super().__init__(model_name)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.model = LogisticRegression()
         # self.pipeline = self.build_pipe()
         self.pipeline = self.bulid_pipe_transformer()
@@ -29,7 +29,7 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
                 ("scaler", self.scaler),
                 ("pca", self.pca),
                 ("classifier", self.model),
-            ]
+            ],
         )
 
     def bulid_pipe_transformer(self):

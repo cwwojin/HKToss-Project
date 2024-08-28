@@ -14,6 +14,9 @@ class BaseSKLearnModel:
         self.model = None
         self.model_name = model_name
 
+    def get_params(self, **kwargs):
+        return self.model.get_params(**kwargs)
+
     def fit(self, X, y=None, **kwargs):
         return self.model.fit(X, y)
 
@@ -40,18 +43,20 @@ class BaseSKLearnPipeline:
     pipeline: Pipeline
     model_name: str
 
-    def __init__(self, model_name: str, **kwargs):
+    def __init__(self, **kwargs):
         self.model = None
         self.pipeline = None
-        self.model_name = model_name
 
     @abstractmethod
-    def build_pipe(self):
+    def build_pipe(self, **kwargs):
         pass
 
     @abstractmethod
     def build_pipe_transformer(self, **kwargs):
         pass
+
+    def get_params(self, **kwargs):
+        return self.pipeline.get_params(**kwargs)
 
     def fit(self, X, y=None, **kwargs):
         return self.pipeline.fit(X, y)

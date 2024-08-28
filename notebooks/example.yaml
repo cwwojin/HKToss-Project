@@ -4,4 +4,13 @@ DATASET:
   RANDOM_STATE: 42
   ID_COL_NAME: SK_ID_CURR
   TARGET_COL_NAME: TARGET
-MODEL_TYPE: mlp
+MODEL_TYPE: logistic
+GRID_SEARCH: true
+MULTIPROCESSING: true
+PCA:
+  N_COMPONENTS: [5]
+LOGISTIC:
+  C: [0.1]
+  penalty: ["l1", "l2"]
+  solver: ["sag"]
+  max_iter: [100]
