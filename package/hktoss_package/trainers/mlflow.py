@@ -52,7 +52,7 @@ class MLFlowTrainer:
         df_x = self.dataframe.drop(columns=[target_col])
         df_x = df_x[sorted(list(df_x.columns))]
 
-        # dataset split
+        # dataset split -- sampling
         X_train, X_test, y_train, y_test = train_test_split(
             df_x,
             df_y,

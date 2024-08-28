@@ -17,6 +17,7 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
         self.model = LogisticRegression()
         self.pipeline = self.build_pipe()
 
+    # pipeline scaler+pca => columntransform change
     def build_pipe(self):
         self.scaler = StandardScaler()
         self.pca = PCA()
