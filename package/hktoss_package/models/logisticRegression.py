@@ -1,4 +1,3 @@
-from hktoss_package.trainers.mlflow import MLFlowTrainer
 from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
@@ -17,8 +16,7 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
-        # self.pipeline = self.build_pipe()
-        self.pipeline = self.bulid_pipe_transformer()
+        self.pipeline = self.build_pipe()
 
     # pipeline scaler+pca => columntransform change
     def build_pipe(self):
@@ -48,6 +46,7 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
         )
         return Pipeline(
             steps=[
-                ("preprocessor", self.preprocessor)("classifier", self.model),
+                ("preprocessor", self.preprocessor),
+                ("classifier", self.model),
             ]
         )

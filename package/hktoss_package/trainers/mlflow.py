@@ -1,10 +1,10 @@
+import json
 import os
 import os.path as path
 from datetime import datetime
-import json
 
 import mlflow
-from mlflow.client import MlflowClient
+import numpy as np
 from hktoss_package.models import (
     CatBoostPipeline,
     LGBMPipeline,
@@ -14,13 +14,16 @@ from hktoss_package.models import (
     XGBPipeline,
 )
 from hktoss_package.utils.functions import is_bool_col
+from imblearn.over_sampling import SMOTE, RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler, TomekLinks
+from mlflow.client import MlflowClient
 from pandas import DataFrame
+from sklearn.compose import make_column_selector
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from yacs.config import CfgNode as CN
-from imblearn.under_sampling import RandomUnderSampler, TomekLinks
-from imblearn.over_sampling import RandomOverSampler
-from sklearn.compose import make_column_selector
+
+MODEL_IMPROVEMENT_THR = 1e-4
 
 
 class MLFlowTrainer:
@@ -28,7 +31,7 @@ class MLFlowTrainer:
     config: CN
     model_name: str
 
-    def __init__(self, tracking_uri: str, config: CN, **kwargs) -> None:
+    def __init__(self, tracking_uri: str, config: CN) -> None:
         self.model = None
         self.config = config
         self.tracking_uri = tracking_uri
@@ -72,30 +75,52 @@ class MLFlowTrainer:
         df_x = self.dataframe.drop(columns=[target_col])
         df_x = df_x[sorted(list(df_x.columns))]
 
+        # Column types
+        one_hot_columns = [c for c in df_x.columns if is_bool_col(df_x[c])]
+        numeric_columns = [c for c in df_x.columns if not c in one_hot_columns]
+
+        # Data Sampler
+        sampler = self.config.DATASET.SAMPLER
+        if sampler == "under_random":
+            data_sampler = RandomUnderSampler(
+                random_state=self.config.DATASET.RANDOM_STATE, replacement=False
+            )
+            df_x, df_y = data_sampler.fit_resample(df_x, df_y)
+        elif sampler == "under_tomeks":
+            data_sampler = TomekLinks()
+            df_x, df_y = data_sampler.fit_resample(df_x, df_y)
+        elif sampler == "over_random":
+            data_sampler = RandomOverSampler(
+                random_state=self.config.DATASET.RANDOM_STATE
+            )
+            df_x, df_y = data_sampler.fit_resample(df_x, df_y)
+        elif sampler == "over_smote":
+            data_sampler = SMOTE(
+                random_state=self.config.DATASET.RANDOM_STATE, k_neighbors=5
+            )
+            df_x, df_y = data_sampler.fit_resample(df_x, df_y)
+
         # Don't use split if using grid-search
         if grid_search:
-            return df_x, df_y
+            return df_x, df_y, {"bool": one_hot_columns, "num": numeric_columns}
+        else:
 
-        # dataset split
-        one_hot_columns = []
-        numeric_columns = []
+            # dataset split
+            X_train, X_test, y_train, y_test = train_test_split(
+                df_x,
+                df_y,
+                test_size=self.config.DATASET.TEST_SIZE,
+                random_state=self.config.DATASET.RANDOM_STATE,
+                stratify=df_y,
+            )
 
-        for col in df.columns:
-            if is_bool_col(df[col]):
-                one_hot_columns.append(col)
-            else:
-                numeric_columns.append(col)
-
-        # dataset split => sampling
-        X_train, X_test, y_train, y_test = train_test_split(
-            df_x,
-            df_y,
-            test_size=self.config.DATASET.TEST_SIZE,
-            random_state=self.config.DATASET.RANDOM_STATE,
-            stratify=df_y,
-        )
-
-        return X_train, X_test, y_train, y_test, numeric_columns, one_hot_columns
+            return (
+                X_train,
+                X_test,
+                y_train,
+                y_test,
+                {"bool": one_hot_columns, "num": numeric_columns},
+            )
 
     def run_experiment(self, dataframe: DataFrame):
         if self.config.GRID_SEARCH:
@@ -104,12 +129,12 @@ class MLFlowTrainer:
             self.run_experiment_single(dataframe)
 
     def run_experiment_single(self, dataframe: DataFrame):
+        # prepare dataset
+        X_train, X_test, y_train, y_test, column_types = self.prepare_data(df=dataframe)
+
         # load model
         if not self.model:
             self.prepare_model()
-
-        # prepare dataset
-        X_train, X_test, y_train, y_test = self.prepare_data(df=dataframe)
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
@@ -165,12 +190,12 @@ class MLFlowTrainer:
         print("Experiment run completed and logged in MLFlow")
 
     def run_grid_search_experiment(self, dataframe: DataFrame):
+        # prepare dataset
+        X, y, column_types = self.prepare_data(df=dataframe, grid_search=True)
+
         # load model
         if not self.model:
             self.prepare_model()
-
-        # prepare dataset
-        X, y = self.prepare_data(df=dataframe, grid_search=True)
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
@@ -238,20 +263,15 @@ class MLFlowTrainer:
             os.remove(model_path)
             os.remove(csv_path)
 
-            # Log the sklearn model and register
-            mlflow.sklearn.log_model(
-                sk_model=self.model.pipeline,
-                artifact_path="registered-model",
-                registered_model_name=self.model_name,
-            )
-
             # Register the model only if score is improved
             prev_version = self.client.get_latest_versions(self.model_name)[0]
             prev_best = (
                 prev_version.tags["f1_score"] if "f1_score" in prev_version.tags else 0
             )
 
-            if search.best_score_ > prev_best:
+            if (
+                np.float32(search.best_score_) - np.float32(prev_best)
+            ) > MODEL_IMPROVEMENT_THR:
                 print(
                     "Trained model is better than the latest version. Saving model to the registry.."
                 )
@@ -261,6 +281,7 @@ class MLFlowTrainer:
                     sk_model=self.model.pipeline,
                     artifact_path="registered-model",
                     registered_model_name=self.model_name,
+                    input_example=X.iloc[:1, :],
                 )
                 # Add Tags to registered model
                 model_info = self.client.get_latest_versions(self.model_name)[0]
@@ -287,6 +308,7 @@ class MLFlowTrainer:
                 mlflow.sklearn.log_model(
                     sk_model=self.model.pipeline,
                     artifact_path="registered-model",
+                    input_example=X.iloc[:1, :],
                 )
 
         # Turn OFF logger until next run
