@@ -46,7 +46,9 @@ class MLFlowTrainer:
             param_grid = dict(self.config[self.config.MODEL_TYPE.upper()])
             return {f"classifier__{k}": v for k, v in param_grid.items()}
 
-    def prepare_model(self):
+    def prepare_model(
+        self,
+    ):
         self.model_name = f"{self.config.MODEL_TYPE}"
         if self.config.MODEL_TYPE == "logistic":
             model = LogisticRegressionPipeline()
@@ -72,12 +74,14 @@ class MLFlowTrainer:
 
         # column selection, ordering
         df_y = self.dataframe[target_col]
+        df_y = df_y.astype(int)
         df_x = self.dataframe.drop(columns=[target_col])
         df_x = df_x[sorted(list(df_x.columns))]
 
         # Column types
-        one_hot_columns = [c for c in df_x.columns if is_bool_col(df_x[c])]
-        numeric_columns = [c for c in df_x.columns if not c in one_hot_columns]
+        one_hot_columns = list(df_x.select_dtypes(exclude="number").columns)
+        numeric_columns = list(df_x.select_dtypes(include="number").columns)
+        df_x[numeric_columns] = df_x[numeric_columns].astype(np.float64)
 
         # Data Sampler
         sampler = self.config.DATASET.SAMPLER
@@ -199,7 +203,7 @@ class MLFlowTrainer:
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
-        experiment_name = f"{self.config.LOGGER.EXPERIMENT_NAME if self.config.LOGGER.EXPERIMENT_NAME else self.config.MODEL_TYPE}_gridsearch"
+        experiment_name = f"{'airflow' if self.config.AIRFLOW else ''}_{self.config.LOGGER.EXPERIMENT_NAME if self.config.LOGGER.EXPERIMENT_NAME else self.config.MODEL_TYPE}_gridsearch"
         try:
             experiment_id = mlflow.create_experiment(experiment_name)
         except:
@@ -220,7 +224,7 @@ class MLFlowTrainer:
             if hasattr(self.model, "pca"):
                 param_grid["pca__n_components"] = self.config.PCA.N_COMPONENTS + [None]
             search = GridSearchCV(
-                self.model.pipeline,  # Fit to model.pipeline, not model
+                self.model.pipeline,
                 param_grid,
                 cv=int(1 / self.config.DATASET.TEST_SIZE),
                 scoring={

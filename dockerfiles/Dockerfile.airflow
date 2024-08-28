@@ -4,6 +4,3 @@ FROM apache/airflow:2.10.0-python3.10
 RUN pip install -U pip --upgrade pip
 COPY ./airflow/requirements.txt .
 RUN pip install -r requirements.txt
-
-COPY ./package .
-RUN pip install -e package/

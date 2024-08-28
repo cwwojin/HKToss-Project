@@ -3,7 +3,7 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer, make_column_selector
+from sklearn.compose import ColumnTransformer
 
 
 class LogisticRegressionModel(BaseSKLearnModel):
@@ -13,12 +13,12 @@ class LogisticRegressionModel(BaseSKLearnModel):
 
 
 class LogisticRegressionPipeline(BaseSKLearnPipeline):
-    def __init__(self, **kwargs):
+    def __init__(self, column_types=None, **kwargs):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
         self.pipeline = self.build_pipe()
 
-    # pipeline scaler+pca => columntransform change
+    # pipeline
     def build_pipe(self):
         self.scaler = StandardScaler()
         self.pca = PCA()
@@ -27,23 +27,33 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
                 ("scaler", self.scaler),
                 ("pca", self.pca),
                 ("classifier", self.model),
-            ],
+            ]
         )
 
-    def bulid_pipe_transformer(self):
+    def build_pipe_transformer(self, column_types):
         self.scaler = StandardScaler()
         self.pca = PCA()
 
-        self.preprocessor = ColumnTransformer(
-            transformers=[
-                (
-                    "scaler_pca",
-                    Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
-                    # 숫자형 데이터
-                ),
-            ],
-            remainder="passthrough",
-        )
+        # Check if numeric columns exist
+        if (
+            column_types is not None
+            and "num" in column_types
+            and column_types["num"] is not None
+        ):
+            self.preprocessor = ColumnTransformer(
+                transformers=[
+                    (
+                        "scaler_pca",
+                        Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
+                        column_types["num"],
+                    ),
+                ],
+                remainder="passthrough",
+            )
+        else:
+            # If no numeric columns, no need for ColumnTransformer
+            self.preprocessor = "passthrough"
+
         return Pipeline(
             steps=[
                 ("preprocessor", self.preprocessor),

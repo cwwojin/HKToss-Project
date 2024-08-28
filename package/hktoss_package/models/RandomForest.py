@@ -26,3 +26,22 @@ class RandomForestPipeline(BaseSKLearnPipeline):
                 ("classifier", self.model),
             ]
         )
+    
+    def build_pipe_transformer(self, numeric_cols):
+        self.scaler = StandardScaler()
+        
+        self.preprocessor = ColumnTransformer(
+            transformers=[
+                (
+                    "scaler",
+                    Pipeline([("scaler", self.scaler)]),
+                    numeric_cols,
+                ),
+            ],
+            remainder="passthrough",
+        )
+        return Pipeline(
+            steps=[
+                ("preprocessor", self.preprocessor)("classifier", self.model),
+            ]
+        )
