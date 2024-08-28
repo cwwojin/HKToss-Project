@@ -79,7 +79,7 @@ _C.MLP.learning_rate = ["adaptive"]
 _C.GRID_SEARCH = True
 _C.MULTIPROCESSING = False
 _C.PCA = CN()
-_C.PCA.N_COMPONENTS = [5, 15, 30, 45, 60, 100]
+_C.PCA.N_COMPONENTS = [5, 10, 20, 50, 100]
 
 # Logger
 _C.LOGGER = CN()
