@@ -49,6 +49,10 @@ class BaseSKLearnPipeline:
     def build_pipe(self):
         pass
 
+    @abstractmethod
+    def build_pipe_transformer(self, **kwargs):
+        pass
+
     def fit(self, X, y=None, **kwargs):
         return self.pipeline.fit(X, y)
 

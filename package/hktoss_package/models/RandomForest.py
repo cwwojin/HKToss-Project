@@ -2,6 +2,7 @@ from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
 from yacs.config import CfgNode as CN
 
 

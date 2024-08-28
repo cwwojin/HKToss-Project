@@ -4,10 +4,14 @@ from datetime import datetime
 
 import mlflow
 from hktoss_package.models import *
+from hktoss_package.utils.functions import is_bool_col
 from pandas import DataFrame
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from yacs.config import CfgNode as CN
+from imblearn.under_sampling import RandomUnderSampler, TomekLinks
+from imblearn.over_sampling import RandomOverSampler
+from sklearn.compose import make_column_selector
 
 
 class MLFlowTrainer:
@@ -52,7 +56,16 @@ class MLFlowTrainer:
         df_x = self.dataframe.drop(columns=[target_col])
         df_x = df_x[sorted(list(df_x.columns))]
 
-        # dataset split -- sampling
+        one_hot_columns = []
+        numeric_columns = []
+
+        for col in df.columns:
+            if is_bool_col(df[col]):
+                one_hot_columns.append(col)
+            else:
+                numeric_columns.append(col)
+
+        # dataset split => sampling
         X_train, X_test, y_train, y_test = train_test_split(
             df_x,
             df_y,
@@ -61,7 +74,7 @@ class MLFlowTrainer:
             stratify=df_y,
         )
 
-        return X_train, X_test, y_train, y_test
+        return X_train, X_test, y_train, y_test, numeric_columns, one_hot_columns
 
     def run_experiment(self, dataframe: DataFrame):
         # load model

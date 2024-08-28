@@ -7,4 +7,7 @@ def initialize_trainer(**kwargs):
     trainer = MLFlowTrainer(
         tracking_uri=os.environ.get("MLFLOW_TRACKING_URI"), config=cfg
     )
-    kwargs['ti'].xcom_push(key="trainer_info", value={"tracking_uri": os.environ.get("MLFLOW_TRACKING_URI"), "config": cfg})
+    kwargs["ti"].xcom_push(
+        key="trainer_info",
+        value={"tracking_uri": os.environ.get("MLFLOW_TRACKING_URI"), "config": cfg},
+    )
