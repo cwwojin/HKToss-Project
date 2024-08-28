@@ -12,8 +12,8 @@ class CatBoostClassifierModel(BaseSKLearnModel):
 
 
 class CatBoostPipeline(BaseSKLearnPipeline):
-    def __init__(self, model_name: str):
-        super().__init__(model_name)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.model = CatBoostClassifier()
         self.pipeline = self.build_pipe()
 

@@ -12,8 +12,8 @@ class RandomForestClassifierModel(BaseSKLearnModel):
 
 
 class RandomForestPipeline(BaseSKLearnPipeline):
-    def __init__(self, model_name: str):
-        super().__init__(model_name)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.model = RandomForestClassifier()
         self.pipeline = self.build_pipe()
 

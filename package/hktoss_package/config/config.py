@@ -19,7 +19,9 @@ _C.DATASET.TARGET_COL_NAME = "TARGET"
 # ======================================================== #
 
 # Default : logistic
-_C.MODEL_TYPE = "logistic"
+_C.MODEL_TYPE = (
+    "logistic"  # logistic | randomforest | xgboost | catboost | lightgbm | mlp
+)
 
 # Logistic Regression
 _C.LOGISTIC = CN()
@@ -46,6 +48,7 @@ _C.MLP = CN()
 # Grid Search
 _C.GRID_SEARCH = True
 _C.PCA = CN()
+_C.PCA.N_COMPONENTS = [5, 15, 30, 45, 60, 100]
 
 # Logger
 _C.LOGGER = CN()
