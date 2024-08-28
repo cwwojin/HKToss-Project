@@ -3,10 +3,17 @@ import os.path as path
 from datetime import datetime
 
 import mlflow
-from hktoss_package.models import *
+from hktoss_package.models import (
+    CatBoostPipeline,
+    LGBMPipeline,
+    LogisticRegressionPipeline,
+    MLPPipeline,
+    RandomForestPipeline,
+    XGBPipeline,
+)
 from pandas import DataFrame
 from sklearn.metrics import f1_score, roc_auc_score
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 from yacs.config import CfgNode as CN
 
 
@@ -26,7 +33,8 @@ class MLFlowTrainer:
 
     def _get_param_grid(self):
         if self.config:
-            return dict(self.config[self.config.MODEL_TYPE.upper()])
+            param_grid = dict(self.config[self.config.MODEL_TYPE.upper()])
+            return {f"classifier__{k}": v for k, v in param_grid.items()}
 
     def prepare_model(self):
         self.model_name = f"{self.config.MODEL_TYPE}"
@@ -130,7 +138,7 @@ class MLFlowTrainer:
 
             # Log the sklearn model and register
             mlflow.sklearn.log_model(
-                sk_model=self.model,
+                sk_model=self.model.pipeline,
                 artifact_path="registered-model",
                 registered_model_name=self.model_name,
             )
@@ -177,6 +185,7 @@ class MLFlowTrainer:
                     "roc_auc_score": "roc_auc",
                 },
                 refit="f1_score",
+                n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
             )
             search.fit(X, y)
 
@@ -206,7 +215,7 @@ class MLFlowTrainer:
 
             # Log the sklearn model and register
             mlflow.sklearn.log_model(
-                sk_model=self.model,
+                sk_model=self.model.pipeline,
                 artifact_path="registered-model",
                 registered_model_name=self.model_name,
             )
