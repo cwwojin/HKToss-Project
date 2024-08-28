@@ -13,10 +13,10 @@ class LogisticRegressionModel(BaseSKLearnModel):
 
 
 class LogisticRegressionPipeline(BaseSKLearnPipeline):
-    def __init__(self, column_type=None, **kwargs):
+    def __init__(self, column_types=None, **kwargs):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
-        self.pipeline = self.build_pipe_transformer(column_type)
+        self.pipeline = self.build_pipe_transformer(column_types)
 
     # pipeline
     def build_pipe(self):
@@ -30,18 +30,18 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
             ]
         )
 
-    def build_pipe_transformer(self, column_type):
+    def build_pipe_transformer(self, column_types):
         self.scaler = StandardScaler()
         self.pca = PCA()
 
         # Check if numeric columns exist
-        if "num" in column_type and column_type["num"]:
+        if column_types is not None and "num" in column_types and column_types["num"] is not None:
             self.preprocessor = ColumnTransformer(
                 transformers=[
                     (
                         "scaler_pca",
                         Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
-                        column_type["num"],
+                        column_types["num"],
                     ),
                 ],
                 remainder="passthrough",

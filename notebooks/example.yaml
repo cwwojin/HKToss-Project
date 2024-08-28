@@ -1,5 +1,5 @@
 DATASET:
-  PATH: .tmp/dataset/train_set.csv
+  PATH: .tmp/dataset/onehot_train_set.csv
   TEST_SIZE: 0.2
   RANDOM_STATE: 42
   ID_COL_NAME: SK_ID_CURR
