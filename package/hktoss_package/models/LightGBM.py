@@ -48,6 +48,7 @@ class LGBMPipeline(BaseSKLearnPipeline):
         )
         return Pipeline(
             steps=[
-                ("preprocessor", self.preprocessor)("classifier", self.model),
+                ("preprocessor", self.preprocessor),
+                ("classifier", self.model),
             ]
         )

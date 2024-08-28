@@ -16,7 +16,8 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
     def __init__(self, column_types=None, **kwargs):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
-        self.pipeline = self.build_pipe_transformer(column_types)
+        self.pipeline = self.build_pipe()
+        # self.pipeline = self.build_pipe_transformer(column_types)
 
     # pipeline
     def build_pipe(self):
@@ -35,7 +36,11 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
         self.pca = PCA()
 
         # Check if numeric columns exist
-        if column_types is not None and "num" in column_types and column_types["num"] is not None:
+        if (
+            column_types is not None
+            and "num" in column_types
+            and column_types["num"] is not None
+        ):
             self.preprocessor = ColumnTransformer(
                 transformers=[
                     (

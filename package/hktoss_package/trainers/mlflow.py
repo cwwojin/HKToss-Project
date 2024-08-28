@@ -18,6 +18,7 @@ from imblearn.over_sampling import SMOTE, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler, TomekLinks
 from mlflow.client import MlflowClient
 from pandas import DataFrame
+from sklearn.compose import make_column_selector
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from yacs.config import CfgNode as CN
@@ -137,9 +138,9 @@ class MLFlowTrainer:
         if not self.model:
             self.prepare_model()
 
-        self.model.pipeline = self.model.build_pipe_transformer(
-            column_types=column_types
-        )
+        # self.model.pipeline = self.model.build_pipe_transformer(
+        #     column_types=column_types
+        # )
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
@@ -202,9 +203,9 @@ class MLFlowTrainer:
         if not self.model:
             self.prepare_model()
 
-        self.model.pipeline = self.model.build_pipe_transformer(
-            column_types=column_types
-        )
+        # self.model.pipeline = self.model.build_pipe_transformer(
+        #     column_types=column_types
+        # )
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
