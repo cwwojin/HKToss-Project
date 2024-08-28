@@ -13,8 +13,8 @@ class LGBMClassifierModel(BaseSKLearnModel):
 
 
 class LGBMPipeline(BaseSKLearnPipeline):
-    def __init__(self, model_name: str):
-        super().__init__(model_name)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.model = LGBMClassifier()
         self.pipeline = self.build_pipe()
 

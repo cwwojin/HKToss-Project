@@ -19,25 +19,57 @@ _C.DATASET.TARGET_COL_NAME = "TARGET"
 # ======================================================== #
 
 # Default : logistic
-_C.MODEL_TYPE = "logistic"
+_C.MODEL_TYPE = (
+    "logistic"  # logistic | randomforest | xgboost | catboost | lightgbm | mlp
+)
 
 # Logistic Regression
 _C.LOGISTIC = CN()
+_C.LOGISTIC.C = [0.1, 1, 10]
+_C.LOGISTIC.penalty = ["l1", "l2"]
+_C.LOGISTIC.solver = [
+    "sag",
+    "saga",
+]
+_C.LOGISTIC.max_iter = [50, 100, 200]
 
 # Random Forest
 _C.RANDOMFOREST = CN()
+_C.RANDOMFOREST.n_estimators = [100, 200, 300]
+_C.RANDOMFOREST.max_depth = [10, 20, 30]
+_C.RANDOMFOREST.min_samples_split = [2, 5, 10]
+_C.RANDOMFOREST.max_features = ["auto", "sqrt", "log2"]
+
 
 # XGBoost
 _C.XGBOOST = CN()
+_C.XGBOOST.n_estimators = [100, 200, 300]
+_C.XGBOOST.max_depth = [3, 6, 9]
+_C.XGBOOST.learning_rate = [0.01, 0.1, 0.2]
+_C.XGBOOST.subsample = [0.6, 0.8, 1.0]
+
 
 # LightGBM
 _C.LIGHTGBM = CN()
+_C.LIGHTGBM.n_estimators = [100, 200, 300]
+_C.LIGHTGBM.max_depth = [10, 20, -1]
+_C.LIGHTGBM.learning_rate = [0.01, 0.1, 0.2]
+_C.LIGHTGBM.num_leaves = [30, 60, 120]
 
 # CatBoost
 _C.CATBOOST = CN()
+_C.CATBOOST.iterations = [100, 200, 300]
+_C.CATBOOST.depth = [4, 6, 8]
+_C.CATBOOST.learning_rate = [0.01, 0.1, 0.2]
+_C.CATBOOST.l2_leaf_reg = [1, 3, 5]
 
 # MLP
 _C.MLP = CN()
+_C.MLP.hidden_layer_sizes = [(50,), (100,), (100, 50), (100, 100, 50)]
+_C.MLP.activation = ["relu", "tanh"]
+_C.MLP.solver = ["adam", "lbfgs"]
+_C.MLP.alpha = [0.0001, 0.001, 0.01]
+_C.MLP.learning_rate = ["adaptive"]
 
 # ======================================================== #
 # Experiment Config                                        #
@@ -45,7 +77,9 @@ _C.MLP = CN()
 
 # Grid Search
 _C.GRID_SEARCH = True
+_C.MULTIPROCESSING = False
 _C.PCA = CN()
+_C.PCA.N_COMPONENTS = [5, 10, 20, 50, 100]
 
 # Logger
 _C.LOGGER = CN()
