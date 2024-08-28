@@ -17,7 +17,6 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
         self.pipeline = self.build_pipe()
-        # self.pipeline = self.build_pipe_transformer(column_types)
 
     # pipeline
     def build_pipe(self):

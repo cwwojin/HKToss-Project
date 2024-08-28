@@ -89,6 +89,13 @@ _C.LOGGER = CN()
 _C.LOGGER.EXPERIMENT_NAME = None
 _C.LOGGER.RUN_NAME = None
 
+# ======================================================== #
+# Airflow Config                                           #
+# ======================================================== #
+
+# Airflow
+_C.AIRFLOW = False
+
 
 def get_cfg_defaults():
     """Get a yacs CfgNode object with default values."""

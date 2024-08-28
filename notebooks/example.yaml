@@ -1,15 +1,16 @@
+AIRFLOW: False
 DATASET:
-  PATH: .tmp/dataset/onehot_train_set.csv
+  PATH: .tmp/dataset/train_set_demo_removed.csv
   TEST_SIZE: 0.2
   RANDOM_STATE: 42
   ID_COL_NAME: SK_ID_CURR
   TARGET_COL_NAME: TARGET
-  SAMPLER: under_random
+  SAMPLER: over_smote
 MODEL_TYPE: logistic
 GRID_SEARCH: true
 MULTIPROCESSING: true
 PCA:
-  N_COMPONENTS: [5]
+  N_COMPONENTS: [10]
 LOGISTIC:
   C: [0.1, 1]
   penalty: ["l2"]
