@@ -1,10 +1,9 @@
-from hktoss_package.trainers.mlflow import MLFlowTrainer
 from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer, make_column_selector
+from sklearn.compose import ColumnTransformer
 
 
 class LogisticRegressionModel(BaseSKLearnModel):
@@ -14,13 +13,16 @@ class LogisticRegressionModel(BaseSKLearnModel):
 
 
 class LogisticRegressionPipeline(BaseSKLearnPipeline):
-    def __init__(self, **kwargs):
+    def __init__(self, column_type=None, **kwargs):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
-        # self.pipeline = self.build_pipe()
-        self.pipeline = self.bulid_pipe_transformer()
+        # 파이프라인을 초기화합니다.
+        if column_type:
+            self.pipeline = self.build_pipe_transformer(column_type=column_type)
+        else:
+            self.pipeline = self.build_pipe()
 
-    # pipeline scaler+pca => columntransform change
+    # pipeline
     def build_pipe(self):
         self.scaler = StandardScaler()
         self.pca = PCA()
@@ -29,25 +31,32 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
                 ("scaler", self.scaler),
                 ("pca", self.pca),
                 ("classifier", self.model),
-            ],
+            ]
         )
 
-    def bulid_pipe_transformer(self):
+    def build_pipe_transformer(self, column_type):
         self.scaler = StandardScaler()
         self.pca = PCA()
 
-        self.preprocessor = ColumnTransformer(
-            transformers=[
-                (
-                    "scaler_pca",
-                    Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
-                    # 숫자형 데이터
-                ),
-            ],
-            remainder="passthrough",
-        )
+        # Check if numeric columns exist
+        if "num" in column_type and column_type["num"]:
+            self.preprocessor = ColumnTransformer(
+                transformers=[
+                    (
+                        "scaler_pca",
+                        Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
+                        column_type["num"],
+                    ),
+                ],
+                remainder="passthrough",
+            )
+        else:
+            # If no numeric columns, no need for ColumnTransformer
+            self.preprocessor = "passthrough"
+
         return Pipeline(
             steps=[
-                ("preprocessor", self.preprocessor)("classifier", self.model),
+                ("preprocessor", self.preprocessor),
+                ("classifier", self.model),
             ]
         )
