@@ -3,6 +3,7 @@ from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer, make_column_selector
 
 
 class CatBoostClassifierModel(BaseSKLearnModel):
@@ -24,6 +25,29 @@ class CatBoostPipeline(BaseSKLearnPipeline):
             steps=[
                 ("scaler", self.scaler),
                 ("pca", self.pca),
+                ("classifier", self.model),
+            ]
+        )
+
+    def bulid_pipe_transformer(self, df):
+        self.scaler = StandardScaler()
+        self.pca = PCA()
+
+        numeric_features = make_column_selector(dtype_include=["int64", "float64"])
+
+        self.preprocessor = ColumnTransformer(
+            transformers=[
+                (
+                    "scaler_pca",
+                    Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
+                    numeric_features(df),
+                ),
+            ],
+            remainder="passthrough",
+        )
+        return Pipeline(
+            steps=[
+                ("preprocessor", self.preprocessor),
                 ("classifier", self.model),
             ]
         )

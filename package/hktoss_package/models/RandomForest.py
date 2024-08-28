@@ -2,6 +2,7 @@ from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
 from yacs.config import CfgNode as CN
 
 
@@ -23,5 +24,24 @@ class RandomForestPipeline(BaseSKLearnPipeline):
             steps=[
                 ("scaler", self.scaler),
                 ("classifier", self.model),
+            ]
+        )
+    
+    def build_pipe_transformer(self, numeric_cols):
+        self.scaler = StandardScaler()
+        
+        self.preprocessor = ColumnTransformer(
+            transformers=[
+                (
+                    "scaler",
+                    Pipeline([("scaler", self.scaler)]),
+                    numeric_cols,
+                ),
+            ],
+            remainder="passthrough",
+        )
+        return Pipeline(
+            steps=[
+                ("preprocessor", self.preprocessor)("classifier", self.model),
             ]
         )

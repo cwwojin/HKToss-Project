@@ -51,6 +51,10 @@ class BaseSKLearnPipeline:
     def build_pipe(self, **kwargs):
         pass
 
+    @abstractmethod
+    def build_pipe_transformer(self, **kwargs):
+        pass
+
     def get_params(self, **kwargs):
         return self.pipeline.get_params(**kwargs)
 

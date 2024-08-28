@@ -14,6 +14,9 @@ _C.DATASET.RANDOM_STATE = 42
 _C.DATASET.ID_COL_NAME = "SK_ID_CURR"
 _C.DATASET.TARGET_COL_NAME = "TARGET"
 
+# Sampling
+_C.DATASET.SAMPLER = None  # over_random | over_smote | under_random | under_tomeks
+
 # ======================================================== #
 # Model Config                                             #
 # ======================================================== #
@@ -85,6 +88,13 @@ _C.PCA.N_COMPONENTS = [5, 10, 20, 50, 100]
 _C.LOGGER = CN()
 _C.LOGGER.EXPERIMENT_NAME = None
 _C.LOGGER.RUN_NAME = None
+
+# ======================================================== #
+# Airflow Config                                           #
+# ======================================================== #
+
+# Airflow
+_C.AIRFLOW = False
 
 
 def get_cfg_defaults():
