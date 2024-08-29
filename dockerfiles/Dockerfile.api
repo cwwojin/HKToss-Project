@@ -1,0 +1,16 @@
+FROM amd64/python:3.10.14-slim
+
+# Working Directory
+WORKDIR /usr/src/app
+
+# Copy files
+COPY .env .
+COPY ./inference_api .
+
+# Install Dependencies
+RUN pip install --upgrade pip &&\
+    pip install -e .
+
+# Start
+EXPOSE 8000
+ENTRYPOINT fastapi run inference_api/app.py
