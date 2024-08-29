@@ -33,7 +33,7 @@ class RandomForestPipeline(BaseSKLearnPipeline):
 
     def build_pipe_transformer(self, column_types: dict):
         self.scaler = StandardScaler()
-        self.encoder = OneHotEncoder()
+        self.encoder = OneHotEncoder(handle_unknown="ignore")
 
         # Build column transformer
         transformers = []
