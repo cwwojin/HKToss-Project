@@ -2,7 +2,7 @@ from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 
 
@@ -16,7 +16,11 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
     def __init__(self, column_types=None, **kwargs):
         super().__init__(**kwargs)
         self.model = LogisticRegression()
-        self.pipeline = self.build_pipe()
+        self.preprocessor = None
+        if column_types:
+            self.pipeline = self.build_pipe_transformer(column_types)
+        else:
+            self.pipeline = self.build_pipe()
 
     # pipeline
     def build_pipe(self):
@@ -30,33 +34,43 @@ class LogisticRegressionPipeline(BaseSKLearnPipeline):
             ]
         )
 
-    def build_pipe_transformer(self, column_types):
+    def build_pipe_transformer(self, column_types: dict):
         self.scaler = StandardScaler()
         self.pca = PCA()
+        self.encoder = OneHotEncoder()
 
-        # Check if numeric columns exist
-        if (
-            column_types is not None
-            and "num" in column_types
-            and column_types["num"] is not None
-        ):
+        # Build column transformer
+        transformers = []
+        if "num" in column_types and column_types["num"]:
+            transformers.append(
+                (
+                    "numeric",
+                    Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
+                    column_types["num"],
+                )
+            )
+        if "cat" in column_types and column_types["cat"]:
+            transformers.append(
+                ("cat", Pipeline([("one_hot", self.encoder)]), column_types["cat"])
+            )
+
+        # Build pipe
+        if transformers:
             self.preprocessor = ColumnTransformer(
-                transformers=[
+                transformers=transformers, remainder="passthrough"
+            )
+            return Pipeline(
+                steps=[
                     (
-                        "scaler_pca",
-                        Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
-                        column_types["num"],
+                        "preprocessor",
+                        self.preprocessor,
                     ),
-                ],
-                remainder="passthrough",
+                    ("classifier", self.model),
+                ]
             )
         else:
-            # If no numeric columns, no need for ColumnTransformer
-            self.preprocessor = "passthrough"
-
-        return Pipeline(
-            steps=[
-                ("preprocessor", self.preprocessor),
-                ("classifier", self.model),
-            ]
-        )
+            return Pipeline(
+                steps=[
+                    ("classifier", self.model),
+                ]
+            )

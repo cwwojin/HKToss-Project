@@ -15,7 +15,7 @@ _C.DATASET.ID_COL_NAME = "SK_ID_CURR"
 _C.DATASET.TARGET_COL_NAME = "TARGET"
 
 # Sampling
-_C.DATASET.SAMPLER = None  # over_random | over_smote | under_random | under_tomeks
+_C.DATASET.SAMPLER = None  # over_random | over_smote | under_random
 
 # ======================================================== #
 # Model Config                                             #
@@ -41,7 +41,7 @@ _C.RANDOMFOREST = CN()
 _C.RANDOMFOREST.n_estimators = [100, 200, 300]
 _C.RANDOMFOREST.max_depth = [10, 20, 30]
 _C.RANDOMFOREST.min_samples_split = [2, 5, 10]
-_C.RANDOMFOREST.max_features = ["auto", "sqrt", "log2"]
+_C.RANDOMFOREST.max_features = [None, "sqrt", "log2"]
 
 
 # XGBoost
