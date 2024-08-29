@@ -21,3 +21,9 @@
 ---
 
 ## 2. Running the API Server
+
+-   run this in **Project Root**
+
+```shell
+$ docker compose --profile api -f docker-compose.yml up
+```
