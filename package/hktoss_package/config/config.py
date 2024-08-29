@@ -35,13 +35,21 @@ _C.LOGISTIC.solver = [
     "saga",
 ]
 _C.LOGISTIC.max_iter = [50, 100, 200]
+_C.LOGISTIC.class_weight = [
+    None,
+    "balanced",
+]  # 클래스 불균형 해결을 위한 옵션 추가: 소수 클래스에 가중치
 
 # Random Forest
 _C.RANDOMFOREST = CN()
 _C.RANDOMFOREST.n_estimators = [100, 200, 300]
 _C.RANDOMFOREST.max_depth = [10, 20, 30]
 _C.RANDOMFOREST.min_samples_split = [2, 5, 10]
-_C.RANDOMFOREST.max_features = [None, "sqrt", "log2"]
+_C.RANDOMFOREST.max_features = ["sqrt", "log2"]
+_C.RANDOMFOREST.class_weight = [
+    None,
+    "balanced",
+]  # 클래스 불균형 해결을 위한 옵션 추가: 소수 클래스에 가중치
 
 
 # XGBoost
@@ -50,6 +58,11 @@ _C.XGBOOST.n_estimators = [100, 200, 300]
 _C.XGBOOST.max_depth = [3, 6, 9]
 _C.XGBOOST.learning_rate = [0.01, 0.1, 0.2]
 _C.XGBOOST.subsample = [0.6, 0.8, 1.0]
+_C.XGBOOST.scale_pos_weight = [
+    1,
+    2,
+    5,
+]  # 불균형 데이터 처리를 위한 가중치 옵션 추가: 양성 클래스에 가중치
 
 
 # LightGBM
@@ -58,6 +71,7 @@ _C.LIGHTGBM.n_estimators = [100, 200, 300]
 _C.LIGHTGBM.max_depth = [10, 20, -1]
 _C.LIGHTGBM.learning_rate = [0.01, 0.1, 0.2]
 _C.LIGHTGBM.num_leaves = [30, 60, 120]
+_C.LIGHTGBM.is_unbalance = [False, True]  # 불균형 데이터 처리를 위한 옵션
 
 # CatBoost
 _C.CATBOOST = CN()
@@ -68,9 +82,11 @@ _C.CATBOOST.l2_leaf_reg = [1, 3, 5]
 
 # MLP
 _C.MLP = CN()
-_C.MLP.hidden_layer_sizes = [(50,), (100,), (100, 50), (100, 100, 50)]
+_C.MLP.hidden_layer_sizes = [(50,), (100,), (100, 50)]
 _C.MLP.activation = ["relu", "tanh"]
-_C.MLP.solver = ["adam", "lbfgs"]
+_C.MLP.solver = [
+    "adam"
+]
 _C.MLP.alpha = [0.0001, 0.001, 0.01]
 _C.MLP.learning_rate = ["adaptive"]
 
