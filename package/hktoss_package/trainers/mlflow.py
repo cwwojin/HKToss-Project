@@ -279,10 +279,15 @@ class MLFlowTrainer:
             os.remove(csv_path)
 
             # Register the model only if score is improved
-            prev_version = self.client.get_latest_versions(self.model_name)[0]
-            prev_best = (
-                prev_version.tags["f1_score"] if "f1_score" in prev_version.tags else 0
-            )
+            try:
+                prev_version = self.client.get_latest_versions(self.model_name)[0]
+                prev_best = (
+                    prev_version.tags["f1_score"]
+                    if "f1_score" in prev_version.tags
+                    else 0
+                )
+            except:
+                prev_best = 0
 
             if (
                 np.float32(search.best_score_) - np.float32(prev_best)
