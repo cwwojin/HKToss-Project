@@ -1,19 +1,21 @@
 from hktoss_package.trainers import MLFlowTrainer
-from yacs.config import CfgNode
+import os
 
+def _run_experiment(**kwargs):
+    # XCom에서 'config'를 불러옵니다.
+    cfg = kwargs["ti"].xcom_pull(key="config", task_ids="load_config")
+    
+    # Config 객체가 제대로 로드되었는지 확인
+    if cfg is None:
+        raise ValueError("XCom에서 config를 가져오지 못했습니다.")
 
-def run_experiment(**kwargs):
-    trainer_info = kwargs["ti"].xcom_pull(
-        key="trainer_info", task_ids="initialize_trainer"
-    )
-
-    # dict로 변환된 config를 CfgNode로 복원
-    config_dict = trainer_info["config"]
-    config_class = CfgNode(config_dict)  # dict를 CfgNode 객체로 변환
-
-    # 이 정보로 트레이너 다시 초기화
+    print("Config 객체:", cfg)
+    print("Grid Search 설정:", cfg.GRID_SEARCH) # 이 부분에서 오류가 발생할 수 있습니다. <- 이거 확인 중
+    
+    # MLFlowTrainer를 초기화합니다.
     trainer = MLFlowTrainer(
-        tracking_uri=trainer_info["tracking_uri"], config=config_class
+        tracking_uri=os.environ.get("MLFLOW_TRACKING_URI"), 
+        config=cfg
     )
 
     # 데이터셋 로드

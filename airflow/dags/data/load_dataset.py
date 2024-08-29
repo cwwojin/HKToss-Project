@@ -3,10 +3,11 @@ import pandas as pd
 
 def load_dataset(**kwargs):
     cfg = kwargs["ti"].xcom_pull(key="config", task_ids="load_config")
-    # dataset_df = pd.read_csv(".cache/train_data_cache.pkl", low_memory=False)
-    # dataset_df = pd.read_csv(cfg.DATASET.PATH, low_memory=False)
+    #cfg.DATASET.PATH을 활용하도록 해야함
 
+    #print(cfg.DATASET.PATH)
     # Pickle 파일에서 데이터셋을 로드하여 DataFrame으로 변환
+
     dataset_df = pd.read_pickle(".cache/train_data_cache.pkl")
 
     # DataFrame을 임시 CSV 파일로 저장

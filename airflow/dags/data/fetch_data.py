@@ -17,7 +17,7 @@ def _fetch_data():
 
     try:
         database = client["mongodatabase"]
-        collection = database["dataset"]
+        collection = database["dataset_final"]
 
         last_id = None
         batch_size = 10000

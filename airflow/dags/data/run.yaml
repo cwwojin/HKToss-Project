@@ -1,8 +1,0 @@
-DATASET:
-  PATH: .cache/train_data_cache.pkl
-  SPLITS: [0.8, 0.2]
-  RANDOM_STATE: 42
-MODEL_TYPE: logistic
-LOGGER:
-  EXPERIMENT_NAME: logistic_regression
-  RUN_NAME: run_logistic_regression
