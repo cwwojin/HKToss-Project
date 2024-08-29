@@ -1,16 +1,15 @@
 from hktoss_package.trainers import MLFlowTrainer
+from hktoss_package.config import get_cfg_defaults
+import pandas as pd
 import os
 
 def _run_experiment(**kwargs):
-    # XCom에서 'config'를 불러옵니다.
-    cfg = kwargs["ti"].xcom_pull(key="config", task_ids="load_config")
+    # 설정 파일 경로를 직접 사용합니다.
+    saved_config_path = "/tmp/config.yaml"
     
-    # Config 객체가 제대로 로드되었는지 확인
-    if cfg is None:
-        raise ValueError("XCom에서 config를 가져오지 못했습니다.")
-
-    print("Config 객체:", cfg)
-    print("Grid Search 설정:", cfg.GRID_SEARCH) # 이 부분에서 오류가 발생할 수 있습니다. <- 이거 확인 중
+    # 설정 파일에서 cfg 객체를 다시 로드합니다.
+    cfg = get_cfg_defaults()
+    cfg.merge_from_file(saved_config_path)
     
     # MLFlowTrainer를 초기화합니다.
     trainer = MLFlowTrainer(
@@ -19,6 +18,7 @@ def _run_experiment(**kwargs):
     )
 
     # 데이터셋 로드
-    dataset_df = kwargs["ti"].xcom_pull(key="dataset", task_ids="load_dataset")
+    temp_csv_path = ".cache/temp_dataset.csv"  # load_dataset 함수에서 생성한 파일 경로와 일치해야 함
+    dataset_df = pd.read_csv(temp_csv_path, low_memory=False)
 
     trainer.run_experiment(dataframe=dataset_df)

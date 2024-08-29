@@ -1,5 +1,4 @@
 from hktoss_package.config import get_cfg_defaults
-from yacs.config import CfgNode as CN
 
 def load_config(**kwargs):
     # Airflow 태스크 인스턴스에서 제공된 인자들에서 config_path를 가져옵니다.
@@ -15,5 +14,9 @@ def load_config(**kwargs):
     cfg.DATASET.SAMPLER = kwargs["sampler"]
     cfg.MODEL_TYPE = kwargs["model"]
 
-    # 설정을 XCom에 저장하여 후속 태스크들이 사용할 수 있도록 합니다.
-    kwargs["ti"].xcom_push(key="config", value=cfg)
+    # 변경된 설정을 파일로 저장합니다.
+    saved_config_path = "/tmp/config.yaml"
+    with open(saved_config_path, "w") as f:
+        f.write(cfg.dump())  # yacs CfgNode 객체를 YAML로 저장
+
+    print(f"Config 파일이 {saved_config_path} 경로에 저장되었습니다.")
