@@ -1,18 +1,44 @@
 AIRFLOW: False
 DATASET:
-  PATH: .tmp/dataset/train_set_demo_removed.csv
+  PATH: .tmp/dataset/dataset_total.csv
   TEST_SIZE: 0.2
   RANDOM_STATE: 42
   ID_COL_NAME: SK_ID_CURR
   TARGET_COL_NAME: TARGET
-  SAMPLER: over_smote
+  SAMPLER: under_random
 MODEL_TYPE: logistic
 GRID_SEARCH: true
 MULTIPROCESSING: true
 PCA:
-  N_COMPONENTS: [10]
+  N_COMPONENTS: []
 LOGISTIC:
-  C: [0.1, 1]
+  C: [0.1]
   penalty: ["l2"]
   solver: ["sag"]
   max_iter: [100]
+RANDOMFOREST:
+  n_estimators: [100]
+  max_depth: [10]
+  min_samples_split: [2]
+  max_features: ["sqrt"]
+XGBOOST:
+  n_estimators: [100]
+  max_depth: [3]
+  learning_rate: [0.01]
+  subsample: [0.6]
+LIGHTGBM:
+  n_estimators: [100]
+  max_depth: [10]
+  learning_rate: [0.01]
+  num_leaves: [30]
+CATBOOST:
+  iterations: [100]
+  depth: [4]
+  learning_rate: [0.01]
+  l2_leaf_reg: [3]
+MLP:
+  hidden_layer_sizes: [[100, 50]]
+  activation: ["relu"]
+  solver: ["adam"]
+  alpha: [0.001]
+  learning_rate: ["adaptive"]

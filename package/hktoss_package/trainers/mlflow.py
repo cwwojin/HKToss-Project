@@ -13,12 +13,10 @@ from hktoss_package.models import (
     RandomForestPipeline,
     XGBPipeline,
 )
-from hktoss_package.utils.functions import is_bool_col
-from imblearn.over_sampling import SMOTE, RandomOverSampler
-from imblearn.under_sampling import RandomUnderSampler, TomekLinks
+from imblearn.over_sampling import SMOTENC, RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
 from mlflow.client import MlflowClient
 from pandas import DataFrame
-from sklearn.compose import make_column_selector
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from yacs.config import CfgNode as CN
@@ -42,26 +40,24 @@ class MLFlowTrainer:
         self.client = MlflowClient(mlflow.get_tracking_uri())
 
     def _get_param_grid(self):
-        if self.config:
-            param_grid = dict(self.config[self.config.MODEL_TYPE.upper()])
-            return {f"classifier__{k}": v for k, v in param_grid.items()}
+        param_grid = dict(self.config[self.config.MODEL_TYPE.upper()])
 
-    def prepare_model(
-        self,
-    ):
+        return {f"classifier__{k}": v for k, v in param_grid.items()}
+
+    def prepare_model(self, column_types: dict = None):
         self.model_name = f"{self.config.MODEL_TYPE}"
         if self.config.MODEL_TYPE == "logistic":
-            model = LogisticRegressionPipeline()
+            model = LogisticRegressionPipeline(column_types)
         elif self.config.MODEL_TYPE == "randomforest":
-            model = RandomForestPipeline()
+            model = RandomForestPipeline(column_types)
         elif self.config.MODEL_TYPE == "xgboost":
-            model = XGBPipeline()
+            model = XGBPipeline(column_types)
         elif self.config.MODEL_TYPE == "lightgbm":
-            model = LGBMPipeline()
+            model = LGBMPipeline(column_types)
         elif self.config.MODEL_TYPE == "catboost":
-            model = CatBoostPipeline()
+            model = CatBoostPipeline(column_types)
         elif self.config.MODEL_TYPE == "mlp":
-            model = MLPPipeline()
+            model = MLPPipeline(column_types)
         else:
             raise NotImplementedError(f"unrecognized model : {self.config.MODEL_TYPE}")
 
@@ -79,19 +75,26 @@ class MLFlowTrainer:
         df_x = df_x[sorted(list(df_x.columns))]
 
         # Column types
-        one_hot_columns = list(df_x.select_dtypes(exclude="number").columns)
+        cat_columns = list(df_x.select_dtypes(exclude=["number", "bool"]).columns)
+        bool_columns = list(df_x.select_dtypes(include="bool").columns)
         numeric_columns = list(df_x.select_dtypes(include="number").columns)
+        column_types = {
+            "cat": cat_columns,
+            "bool": bool_columns,
+            "num": numeric_columns,
+        }
+
+        # Convert bool & numeric -> float64
         df_x[numeric_columns] = df_x[numeric_columns].astype(np.float64)
+        df_x[bool_columns] = df_x[bool_columns].astype(np.float64)
 
         # Data Sampler
         sampler = self.config.DATASET.SAMPLER
         if sampler == "under_random":
             data_sampler = RandomUnderSampler(
-                random_state=self.config.DATASET.RANDOM_STATE, replacement=False
+                random_state=self.config.DATASET.RANDOM_STATE,
+                replacement=False,
             )
-            df_x, df_y = data_sampler.fit_resample(df_x, df_y)
-        elif sampler == "under_tomeks":
-            data_sampler = TomekLinks()
             df_x, df_y = data_sampler.fit_resample(df_x, df_y)
         elif sampler == "over_random":
             data_sampler = RandomOverSampler(
@@ -99,14 +102,15 @@ class MLFlowTrainer:
             )
             df_x, df_y = data_sampler.fit_resample(df_x, df_y)
         elif sampler == "over_smote":
-            data_sampler = SMOTE(
-                random_state=self.config.DATASET.RANDOM_STATE, k_neighbors=5
+            data_sampler = SMOTENC(
+                categorical_features=cat_columns,
+                random_state=self.config.DATASET.RANDOM_STATE,
+                k_neighbors=5,
             )
             df_x, df_y = data_sampler.fit_resample(df_x, df_y)
-
         # Don't use split if using grid-search
         if grid_search:
-            return df_x, df_y, {"bool": one_hot_columns, "num": numeric_columns}
+            return df_x, df_y, column_types
         else:
 
             # dataset split
@@ -123,7 +127,7 @@ class MLFlowTrainer:
                 X_test,
                 y_train,
                 y_test,
-                {"bool": one_hot_columns, "num": numeric_columns},
+                column_types,
             )
 
     def run_experiment(self, dataframe: DataFrame):
@@ -199,11 +203,11 @@ class MLFlowTrainer:
 
         # load model
         if not self.model:
-            self.prepare_model()
+            self.prepare_model(column_types)
 
         # init experiment
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d_%H:%M:%S")
-        experiment_name = f"{'airflow' if self.config.AIRFLOW else ''}_{self.config.LOGGER.EXPERIMENT_NAME if self.config.LOGGER.EXPERIMENT_NAME else self.config.MODEL_TYPE}_gridsearch"
+        experiment_name = f"{'airflow_' if self.config.AIRFLOW else ''}{self.config.LOGGER.EXPERIMENT_NAME if self.config.LOGGER.EXPERIMENT_NAME else self.config.MODEL_TYPE}_gridsearch"
         try:
             experiment_id = mlflow.create_experiment(experiment_name)
         except:
@@ -222,7 +226,14 @@ class MLFlowTrainer:
             # Init grid search
             param_grid = self._get_param_grid()
             if hasattr(self.model, "pca"):
-                param_grid["pca__n_components"] = self.config.PCA.N_COMPONENTS + [None]
+                if self.model.preprocessor:
+                    param_grid["preprocessor__numeric__pca__n_components"] = (
+                        self.config.PCA.N_COMPONENTS + [None]
+                    )
+                else:
+                    param_grid["pca__n_components"] = self.config.PCA.N_COMPONENTS + [
+                        None
+                    ]
             search = GridSearchCV(
                 self.model.pipeline,
                 param_grid,

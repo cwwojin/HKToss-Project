@@ -2,9 +2,8 @@ from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
 from lightgbm import LGBMClassifier
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer, make_column_selector
-from yacs.config import CfgNode as CN
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
 
 
 class LGBMClassifierModel(BaseSKLearnModel):
@@ -14,10 +13,14 @@ class LGBMClassifierModel(BaseSKLearnModel):
 
 
 class LGBMPipeline(BaseSKLearnPipeline):
-    def __init__(self, **kwargs):
+    def __init__(self, column_types=None, **kwargs):
         super().__init__(**kwargs)
         self.model = LGBMClassifier()
-        self.pipeline = self.build_pipe()
+        self.preprocessor = None
+        if column_types:
+            self.pipeline = self.build_pipe_transformer(column_types)
+        else:
+            self.pipeline = self.build_pipe()
 
     def build_pipe(self):
         self.scaler = StandardScaler()
@@ -30,25 +33,43 @@ class LGBMPipeline(BaseSKLearnPipeline):
             ]
         )
 
-    def bulid_pipe_transformer(self, df):
+    def build_pipe_transformer(self, column_types: dict):
         self.scaler = StandardScaler()
         self.pca = PCA()
+        self.encoder = OneHotEncoder()
 
-        numeric_features = make_column_selector(dtype_include=["int64", "float64"])
-
-        self.preprocessor = ColumnTransformer(
-            transformers=[
+        # Build column transformer
+        transformers = []
+        if "num" in column_types and column_types["num"]:
+            transformers.append(
                 (
-                    "scaler_pca",
+                    "numeric",
                     Pipeline([("scaler", self.scaler), ("pca", self.pca)]),
-                    numeric_features(df),
-                ),
-            ],
-            remainder="passthrough",
-        )
-        return Pipeline(
-            steps=[
-                ("preprocessor", self.preprocessor),
-                ("classifier", self.model),
-            ]
-        )
+                    column_types["num"],
+                )
+            )
+        if "cat" in column_types and column_types["cat"]:
+            transformers.append(
+                ("cat", Pipeline([("one_hot", self.encoder)]), column_types["cat"])
+            )
+
+        # Build pipe
+        if transformers:
+            self.preprocessor = ColumnTransformer(
+                transformers=transformers, remainder="passthrough"
+            )
+            return Pipeline(
+                steps=[
+                    (
+                        "preprocessor",
+                        self.preprocessor,
+                    ),
+                    ("classifier", self.model),
+                ]
+            )
+        else:
+            return Pipeline(
+                steps=[
+                    ("classifier", self.model),
+                ]
+            )
