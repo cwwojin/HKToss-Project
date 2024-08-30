@@ -12,10 +12,6 @@ from data.run_experiment import _run_experiment
 from data.combine_data import _combine_batches
 
 
-# config.yaml 파일 로드
-with open('/opt/airflow/config/config.yaml', 'r') as file:
-    config = yaml.safe_load(file)
-
 samplers = [None, "over_random", "over_smote", "under_random"]
 models = ["logistic", "randomforest", "xgboost", "catboost", "lightgbm", "mlp"]
 
@@ -60,15 +56,12 @@ with DAG(
     for i, (model, sampler) in enumerate(combinations):
 
         sampler_str = sampler if sampler is not None else "none"
-        
+
         with TaskGroup(group_id=f"group_{i+1}") as model_experiment:
             # 각 조합에 대해 load_dataset_task 생성
             load_dataset_task = PythonOperator(
                 task_id=f"load_dataset_{model}_{sampler_str}",
                 python_callable=load_dataset,
-                op_kwargs={
-                    "data_path": config['DATASET']["PATH"],
-                }
             )
 
             # 각 조합에 대해 run_experiment_task 생성
@@ -76,7 +69,6 @@ with DAG(
                 task_id=f"run_experiment_{model}_{sampler}",
                 python_callable=_run_experiment,
                 op_kwargs={
-                    "config_path": "/opt/airflow/config/config.yaml",
                     "model": model,
                     "sampler": sampler,
                 },
@@ -90,6 +82,5 @@ with DAG(
             previous_group >> model_experiment
         else:
             combine_data_sensor >> model_experiment
-        
-        previous_group = model_experiment  # 현재 그룹을 이전 그룹으로 설정
 
+        previous_group = model_experiment  # 현재 그룹을 이전 그룹으로 설정
