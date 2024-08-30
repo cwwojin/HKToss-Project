@@ -289,29 +289,3 @@ services:
             <<: *airflow-common-depends-on
             airflow-init:
                 condition: service_completed_successfully
-
-    # MLFlow Container
-    mlflow-server:
-        platform: linux/amd64
-        container_name: mlflow-airflow-server
-        build:
-            context: .
-            dockerfile: dockerfiles/Dockerfile.mlflow
-        image: mlflow-airflow-image
-        pull_policy: build
-        ports:
-            - 5001:5001
-        volumes:
-            - ./.mlflow-data:/mlflow
-        env_file: .env
-        command:
-            - /bin/sh
-            - -c
-            - |
-                mlflow server -p 5001 \
-                --backend-store-uri sqlite:///mlflow.db \
-                --default-artifact-root s3://${AWS_BUCKET_NAME}/ \
-                --host 0.0.0.0
-        profiles:
-            - all
-            - mlflow

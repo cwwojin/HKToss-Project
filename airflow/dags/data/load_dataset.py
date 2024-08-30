@@ -1,19 +1,16 @@
 import pandas as pd
-
+from hktoss_package.config import get_cfg_defaults
 
 def load_dataset(**kwargs):
-    cfg = kwargs["ti"].xcom_pull(key="config", task_ids="load_config")
-    # dataset_df = pd.read_csv(".cache/train_data_cache.pkl", low_memory=False)
-    # dataset_df = pd.read_csv(cfg.DATASET.PATH, low_memory=False)
+    # Airflow 태스크 인스턴스에서 제공된 인자들에서 config_path를 가져옵니다.
+    data_path = kwargs["data_path"]
+    print(data_path)
 
-    # Pickle 파일에서 데이터셋을 로드하여 DataFrame으로 변환
-    dataset_df = pd.read_pickle(".cache/train_data_cache.pkl")
+    # 데이터셋 로드
+    dataset_df = pd.read_pickle(data_path)
 
     # DataFrame을 임시 CSV 파일로 저장
     temp_csv_path = ".cache/temp_dataset.csv"
     dataset_df.to_csv(temp_csv_path, index=False)
 
-    # CSV 파일을 다시 읽어들임
-    dataset_df = pd.read_csv(temp_csv_path, low_memory=False)
-
-    kwargs["ti"].xcom_push(key="dataset", value=dataset_df)
+    print(f"데이터셋이 {temp_csv_path} 경로에 저장되었습니다.")

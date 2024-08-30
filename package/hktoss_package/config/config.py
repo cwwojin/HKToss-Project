@@ -8,7 +8,7 @@ _C = CN()
 
 _C.DATASET = CN()
 
-_C.DATASET.PATH = ".data/dataset.csv"  # path to dataset file
+_C.DATASET.PATH = ".cache/train_data_cache.pkl"  # path to dataset file
 _C.DATASET.TEST_SIZE = 0.2
 _C.DATASET.RANDOM_STATE = 42
 _C.DATASET.ID_COL_NAME = "SK_ID_CURR"
@@ -110,7 +110,7 @@ _C.LOGGER.RUN_NAME = None
 # ======================================================== #
 
 # Airflow
-_C.AIRFLOW = False
+_C.AIRFLOW = True
 
 
 def get_cfg_defaults():
@@ -118,3 +118,6 @@ def get_cfg_defaults():
     # Return a clone so that the defaults will not be altered
     # This is for the "local variable" use pattern
     return _C.clone()
+
+# 모듈 수준에서 cfg 객체를 정의
+cfg = get_cfg_defaults()
