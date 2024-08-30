@@ -7,12 +7,41 @@ from datetime import datetime
 import os
 import platform
 
-# # 데이터셋 경로 설정
-# data_path = os.path.join("data", "demo_set.csv")
 
+# HTML을 사용하여 스타일 추가
+st.markdown(
+    """
+    <style>
+    /* 사이드바 배경색 설정 */
+    [data-testid="stSidebar"] {
+        background-color: #0064FF;  /* Toss Blue */
+    }
 
-# 추후 경로 다시 설정할게요!!
-data_path = "/Users/khb43/Desktop/HANKYUNG_WITH_TOSS_BANK-2(소민호 강사님)/week9~11 실무 프로젝트 관련/data/선정 데이터(프로젝트 데이터)/clients/demo_set.csv"
+    /* 메인 화면 배경색 설정 */
+    .css-18e3th9 {
+        background-color: #202632;  /* Toss Gray */
+    }
+
+    /* 텍스트 및 위젯 스타일 설정 */
+    .css-1lcbmhc, .css-14xtw13 {
+        color: white;  /* 텍스트 색상 */
+    }
+
+    /* 슬라이더 스타일 설정 */
+    .css-16ws1b0 a {
+        background-color: #0064FF !important;  /* Toss Blue */
+    }
+
+    /* 버튼 스타일 설정 */
+    .css-1cpxqw2 {
+        background-color: #0064FF !important;  /* Toss Blue */
+        color: white;  /* 버튼 텍스트 색상 */
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # font_name = font_manager.FontProperties(fname=font_path).get_name()
@@ -32,18 +61,32 @@ elif platform.system() == "Linux":  # 리눅스 (구글 콜랩)
 plt.rcParams["axes.unicode_minus"] = False  # 한글 폰트 사용시 마이너스 폰트 깨짐 해결
 
 
+# # 데이터셋 경로 설정
+# data_path = os.path.join("data", "demo_set.csv")
+
+demo_data_path = "/Users/khb43/Desktop/GIT_SHOWVINI/HKToss-Project/notebooks/.tmp/dataset/demo_set.csv"
+total_data_path = "/Users/khb43/Desktop/GIT_SHOWVINI/HKToss-Project/notebooks/.tmp/dataset/dataset_total.csv"
+
+
 @st.cache_data
-def load_data():
-    df = pd.read_csv(data_path, low_memory=False)
+def load_demo_data():
+    df = pd.read_csv(demo_data_path, low_memory=False)
+    return df
+
+
+def load_total_data():
+    df = pd.read_csv(total_data_path, low_memory=False)
     return df
 
 
 # 데이터 로드
-demo = load_data()
+demo = load_demo_data()
+total = load_total_data()
+
 
 # 열 이름 매핑
 column_mapping = {
-    "Credit_Utilization_Ratio": "신용 사용 비율",
+    "Credit_Utilization_Ratio": "대출 상환 비율",
     "Debt_to_Income_Ratio": "부채 상환 비율",
     "OVERDUE_RATIO": "💸 대출 대비 연체 횟수",
     "Debt_Repayment_Capability_Index": "부채 상환 가능성 지수",
@@ -51,6 +94,7 @@ column_mapping = {
     "AMT_CREDIT": "현재 대출 금액",
     "name": "이름",
     "DAYS_BIRTH": "😀 나이",
+    "CODE_GENDER": "성별",
     "FLAG_MOBIL": "📱 휴대전화 소유 여부",
     "FLAG_OWN_CAR": "🚗 자차 소유 여부",  # 열 이름 확인 후 올바르게 수정
     "FLAG_OWN_REALTY": "🏡 부동산 소유 여부",
@@ -113,6 +157,8 @@ filtered_demo = demo[
     (demo["현재 대출 금액"] >= credit_min) & (demo["현재 대출 금액"] <= credit_max)
 ]
 
+# 본 화면
+
 
 # 시각화 함수 정의
 def create_style(ax):
@@ -151,10 +197,14 @@ if predict_button:
                 age -= 1
             return age
 
+        # 점선 추가
+        st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
+
         age = calculate_age(selected_user["😀 나이"])
 
         st.subheader("현재 나의 정보")
         st.markdown(f"**😀 나이:** {age} 세")
+        st.markdown(f"**👫 성별:** {selected_user['성별']}")  # 성별 추가
         st.markdown(
             f"**📱 휴대전화 소유 여부:** {'Y' if selected_user['📱 휴대전화 소유 여부'] else 'N'}"
         )
@@ -169,23 +219,65 @@ if predict_button:
         )
 
         # 점선 추가
-        st.markdown("<hr style='border: 1px dashed #000;' />", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
-        # 대출 대비 연체 횟수
+        st.subheader("개인 대출 정보")
+
+        # 연수입
+        user_income = selected_user["연간 소득"]
+        income_percentile = (total["AMT_INCOME_TOTAL"] < user_income).mean() * 100
+        st.write(f"💶 **나의 연수입:**")
+        st.write(f"내 연수입은 상위 {income_percentile:.1f}%에요.")
+
+        # 부양 부담 지수 (Dependents_Index)
+        dependents_index = selected_user.get("Dependents_Index", "정보 없음")
+        st.write(f"👶 부양 부담 지수: {dependents_index}")
         st.write(
-            f"**💸 대출 대비 연체 횟수:** {selected_user['💸 대출 대비 연체 횟수']}"
+            ": 자녀에 대한 부양 부담이 가족 내에서 얼마나 큰 비중을 차지하는지를 나타내요."
         )
 
-        # 대출 이력 연체 횟수 차트
+        # 소득 대비 부양 부담 지수 (Income_to_Dependents_Ratio)
+        income_to_dependents_ratio = selected_user.get(
+            "Income_to_Dependents_Ratio", "정보 없음"
+        )
+        st.write(f"🙋‍♂️🙋‍♀️ 소득 대비 부양 부담 지수: {income_to_dependents_ratio}")
+        st.write(
+            ": 개인의 소득이 자녀 부양에 얼마나 적절하게 분배될 수 있는지를 나타내요."
+        )
+
+        # 점선 추가
+        st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
+
         loan_count = int(selected_user["과거 대출 횟수"])  # 정수형으로 변환
+
         if loan_count > 0:
+            st.subheader("과거 대출 이력")
+
+            # 과거 대출 이력이 있는 경우 DSR 표현 추가
+            if loan_count > 0:
+                dsr = selected_user.get(
+                    "부채 상환 가능성 지수", None
+                )  # 'Debt_Repayment_Capability_Index' 컬럼 매핑된 이름 사용
+            if dsr is not None:
+                st.write(f"**💼 DSR:**")
+                st.write(
+                    f"내가 버는 총 소득 중에서 {dsr:.2f}%를 대출 상환에 쓰고 있어요."
+                )
+
+            # 대출 대비 연체 횟수
+            st.write(
+                f"**💸 대출 대비 연체 횟수:** {selected_user['💸 대출 대비 연체 횟수']}"
+            )
+
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
-            ax.set_title("과거 대출 횟수 분포", color="white")
+            ax.set_title(
+                f"전체 고객 대출 횟수 대비 {name}님의 과거 대출 횟수", color="white"
+            )
 
             bins_range = range(0, int(demo["과거 대출 횟수"].max()) + 1)
             sns.histplot(
-                demo["과거 대출 횟수"],
+                total["LOAN_COUNT"],
                 kde=False,
                 ax=ax,
                 color="lightblue",
@@ -204,36 +296,24 @@ if predict_button:
 
             st.pyplot(fig)
 
-            # 대출 이력 연체 횟수 차트
-            overdue_data = demo[demo["💸 대출 대비 연체 횟수"] > 0]
-            if not overdue_data.empty:
-                st.write("**대출 대비 연체 횟수 분포**")
-                fig, ax = plt.subplots(figsize=(8, 4))
-                create_style(ax)
-                ax.set_title("대출 대비 연체 횟수 분포", color="white")
-
-                sns.countplot(
-                    x="💸 대출 대비 연체 횟수",
-                    data=overdue_data,
-                    ax=ax,
-                    palette="pastel",
-                )
-                st.pyplot(fig)
-
-            # 신용 사용 비율 차트
-            st.write("신용 사용 비율")
+            # 대출 상환 비율 차트
+            st.write("대출 상환 비율")
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
-            ax.set_title("신용 사용 비율 분포", color="white")
+            ax.set_title(
+                f"전체 고객 대출 상환 비율 분포에서의 {name}님의 비율", color="white"
+            )
 
-            sns.histplot(demo["신용 사용 비율"], kde=True, ax=ax, color="skyblue")
+            sns.histplot(
+                total["Credit_Utilization_Ratio"], kde=True, ax=ax, color="skyblue"
+            )
 
             # 사용자 포인트 표시
-            ax.axvline(selected_user["신용 사용 비율"], color="red", linestyle="--")
+            ax.axvline(selected_user["대출 상환 비율"], color="red", linestyle="--")
             ax.text(
-                selected_user["신용 사용 비율"],
+                selected_user["대출 상환 비율"],
                 ax.get_ylim()[1] * 0.9,
-                f'{name}: {selected_user["신용 사용 비율"]:.2f}',
+                f'{name}: {selected_user["대출 상환 비율"]:.2f}',
                 color="#FF4B4B",
                 ha="center",
             )
@@ -244,9 +324,11 @@ if predict_button:
             st.write("연 수입 대비 총 부채 비율")
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
-            ax.set_title("연 수입 대비 총 부채 비율 분포", color="white")
+            ax.set_title(
+                f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율", color="white"
+            )
 
-            sns.histplot(demo["부채 상환 비율"], kde=True, ax=ax, color="salmon")
+            sns.histplot(total["Debt_to_Income_Ratio"], kde=True, ax=ax, color="salmon")
 
             # 사용자 포인트 표시
             ax.axvline(selected_user["부채 상환 비율"], color="red", linestyle="--")
@@ -261,10 +343,11 @@ if predict_button:
             st.pyplot(fig)
 
         else:
+            st.subheader("과거 대출 이력")
             st.write("**조회할 대출 이력이 없습니다.**")
 
         # 점선 추가
-        st.markdown("<hr style='border: 1px dashed #000;' />", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
         # 대출 상품 정보와 평가 버튼 추가
         st.subheader("신청한 대출 정보")
