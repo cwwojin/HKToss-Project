@@ -1,0 +1,19 @@
+# Versioning and metadata
+.git
+.github
+.gitignore
+.dockerignore
+
+# Temp directory
+.temp
+.tmp
+
+# Bind mounts
+.pgdata
+
+# MLFlow
+.mlflow-data
+
+# Extras
+.DS_Store
+*.md

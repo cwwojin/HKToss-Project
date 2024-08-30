@@ -1,0 +1,15 @@
+services:
+    # API Container
+    api:
+        platform: linux/amd64
+        container_name: inference_api
+        build:
+            context: .
+            dockerfile: dockerfiles/Dockerfile.api
+        image: inference_api
+        pull_policy: build
+        ports:
+            - 8000:8000
+        profiles:
+            - full
+            - api
