@@ -1,0 +1,38 @@
+name: Deploy Airflow Server
+
+on:
+    push:
+        branches: ["feature/airflow_workflow_WJ"]
+
+env:
+    AWS_REGION: ${{ secrets.MY_AWS_REGION }}
+    BRANCH: feature/airflow_workflow_WJ
+
+permissions:
+    contents: read
+
+jobs:
+    deploy:
+        name: Deploy
+        runs-on: ubuntu-22.04
+        steps:
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Build & deploy on EC2 with SSH
+              uses: appleboy/ssh-action@master
+              with:
+                  host: ${{ secrets.AIRFLOW_EC2_HOST }}
+                  username: ubuntu
+                  key: ${{ secrets.AIRFLOW_SSH_KEY }}
+                  port: 22
+                  script: |
+                      cd ~/HKToss-Project
+                      git checkout ${{ env.BRANCH }}
+                      git fetch && git pull
+                      aws s3 cp s3://hktoss-mlops/env/.env .env
+                      docker compose -f docker-compose.airflow.yml up -d --force-recreate
