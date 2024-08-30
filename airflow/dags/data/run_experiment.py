@@ -1,22 +1,30 @@
 from hktoss_package.trainers import MLFlowTrainer
-from yacs.config import CfgNode
+from hktoss_package.config import get_cfg_defaults
+import pandas as pd
+import os
 
 
-def run_experiment(**kwargs):
-    trainer_info = kwargs["ti"].xcom_pull(
-        key="trainer_info", task_ids="initialize_trainer"
-    )
+def _run_experiment(**kwargs):
+    # 기본 설정을 가져옵니다.
+    cfg = get_cfg_defaults()
 
-    # dict로 변환된 config를 CfgNode로 복원
-    config_dict = trainer_info["config"]
-    config_class = CfgNode(config_dict)  # dict를 CfgNode 객체로 변환
+    cfg.MODEL_TYPE = kwargs["model"]
+    cfg.DATASET.SAMPLER = kwargs["sampler"]
 
-    # 이 정보로 트레이너 다시 초기화
+    print(cfg.MODEL_TYPE)
+    print(cfg.DATASET.SAMPLER)
+
+    print(cfg)
+
+    # MLFlowTrainer를 초기화합니다.
     trainer = MLFlowTrainer(
-        tracking_uri=trainer_info["tracking_uri"], config=config_class
+        tracking_uri=os.environ.get("MLFLOW_TRACKING_URI"), config=cfg
     )
 
     # 데이터셋 로드
-    dataset_df = kwargs["ti"].xcom_pull(key="dataset", task_ids="load_dataset")
+    temp_csv_path = ".cache/temp_dataset.csv"  # load_dataset 함수에서 생성한 파일 경로와 일치해야 함
 
+    dataset_df = pd.read_csv(temp_csv_path, low_memory=False)
+
+    # 실험 실행
     trainer.run_experiment(dataframe=dataset_df)

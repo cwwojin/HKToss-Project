@@ -1,23 +1,15 @@
 services:
-    # MLFlow Container
-    mlflow-server:
+    # API Container
+    api:
         platform: linux/amd64
-        container_name: mlflow-airflow-server
+        container_name: inference_api
         build:
             context: .
-            dockerfile: dockerfiles/Dockerfile.mlflow
-        image: mlflow-airflow-image
+            dockerfile: dockerfiles/Dockerfile.api
+        image: inference_api
         pull_policy: build
         ports:
-            - 5001:5001
-        volumes:
-            - ./.mlflow-data:/mlflow
-        env_file: .env
-        command:
-            - /bin/sh
-            - -c
-            - |
-                mlflow server -p 5001 \
-                --backend-store-uri sqlite:///mlflow.db \
-                --default-artifact-root s3://${AWS_BUCKET_NAME}/ \
-                --host 0.0.0.0
+            - 8000:8000
+        profiles:
+            - full
+            - api
