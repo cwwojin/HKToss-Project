@@ -1,6 +1,7 @@
 import pandas as pd
 from hktoss_package.config import get_cfg_defaults
 
+
 def load_dataset(**kwargs):
     # Airflow 태스크 인스턴스에서 제공된 인자들에서 config_path를 가져옵니다.
     data_path = kwargs["data_path"]
