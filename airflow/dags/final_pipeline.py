@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from itertools import product
-import yaml
 from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.utils.task_group import TaskGroup
@@ -12,12 +11,8 @@ from data.run_experiment import _run_experiment
 from data.combine_data import _combine_batches
 
 
-# config.yaml 파일 로드
-with open("/opt/airflow/config/config.yaml", "r") as file:
-    config = yaml.safe_load(file)
-
-samplers = [None, "over_random", "over_smote", "under_random"]
-models = ["logistic", "randomforest", "xgboost", "catboost", "lightgbm", "mlp"]
+samplers = ["over_random", "over_smote", "under_random", None]
+models = ["randomforest", "logistic", "xgboost", "catboost", "lightgbm", "mlp"]
 
 # 모델과 샘플러의 모든 조합 생성
 combinations = list(product(models, samplers))
@@ -66,9 +61,6 @@ with DAG(
             load_dataset_task = PythonOperator(
                 task_id=f"load_dataset_{model}_{sampler_str}",
                 python_callable=load_dataset,
-                op_kwargs={
-                    "data_path": config["DATASET"]["PATH"],
-                },
             )
 
             # 각 조합에 대해 run_experiment_task 생성
@@ -76,7 +68,6 @@ with DAG(
                 task_id=f"run_experiment_{model}_{sampler}",
                 python_callable=_run_experiment,
                 op_kwargs={
-                    "config_path": "/opt/airflow/config/config.yaml",
                     "model": model,
                     "sampler": sampler,
                 },
