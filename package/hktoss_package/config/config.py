@@ -84,9 +84,7 @@ _C.CATBOOST.l2_leaf_reg = [1, 3, 5]
 _C.MLP = CN()
 _C.MLP.hidden_layer_sizes = [(50,), (100,), (100, 50)]
 _C.MLP.activation = ["relu", "tanh"]
-_C.MLP.solver = [
-    "adam"
-]
+_C.MLP.solver = ["adam"]
 _C.MLP.alpha = [0.0001, 0.001, 0.01]
 _C.MLP.learning_rate = ["adaptive"]
 
@@ -118,6 +116,7 @@ def get_cfg_defaults():
     # Return a clone so that the defaults will not be altered
     # This is for the "local variable" use pattern
     return _C.clone()
+
 
 # 모듈 수준에서 cfg 객체를 정의
 cfg = get_cfg_defaults()
