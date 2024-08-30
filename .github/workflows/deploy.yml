@@ -2,7 +2,7 @@ name: Deploy to Amazon ECS
 
 on:
     push:
-        branches: ["feature/inference_api_WJ"]
+        branches: ["main"]
 
 env:
     AWS_REGION: ${{ secrets.MY_AWS_REGION }}
