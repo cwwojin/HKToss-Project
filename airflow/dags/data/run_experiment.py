@@ -1,7 +1,6 @@
 from hktoss_package.trainers import MLFlowTrainer
 from hktoss_package.config import get_cfg_defaults
 import pandas as pd
-import yaml
 import os
 
 
@@ -14,9 +13,6 @@ def _run_experiment(**kwargs):
 
     print(cfg.MODEL_TYPE)
     print(cfg.DATASET.SAMPLER)
-
-    # 설정 파일에서 추가 설정을 병합합니다.
-    # cfg.merge_from_file(config_path)
 
     print(cfg)
 

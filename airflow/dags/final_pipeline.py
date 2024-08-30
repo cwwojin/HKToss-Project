@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from itertools import product
-import yaml
 from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.utils.task_group import TaskGroup
@@ -12,8 +11,8 @@ from data.run_experiment import _run_experiment
 from data.combine_data import _combine_batches
 
 
-samplers = [None, "over_random", "over_smote", "under_random"]
-models = ["logistic", "randomforest", "xgboost", "catboost", "lightgbm", "mlp"]
+samplers = ["over_random", "over_smote", "under_random", None]
+models = ["randomforest", "logistic", "xgboost", "catboost", "lightgbm", "mlp"]
 
 # 모델과 샘플러의 모든 조합 생성
 combinations = list(product(models, samplers))
