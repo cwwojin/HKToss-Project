@@ -1,16 +1,13 @@
 import pandas as pd
 from hktoss_package.config import get_cfg_defaults
 
-
 def load_dataset(**kwargs):
-    # 설정 파일 경로를 직접 사용합니다.
-    saved_config_path = "/tmp/config.yaml"
-    
-    # 설정 파일에서 cfg 객체를 다시 로드합니다.
-    cfg = get_cfg_defaults()
-    cfg.merge_from_file(saved_config_path)
+    # Airflow 태스크 인스턴스에서 제공된 인자들에서 config_path를 가져옵니다.
+    data_path = kwargs["data_path"]
+    print(data_path)
 
-    dataset_df = pd.read_pickle(cfg.DATASET.PATH)
+    # 데이터셋 로드
+    dataset_df = pd.read_pickle(data_path)
 
     # DataFrame을 임시 CSV 파일로 저장
     temp_csv_path = ".cache/temp_dataset.csv"

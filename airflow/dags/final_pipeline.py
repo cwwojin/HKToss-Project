@@ -1,27 +1,26 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from itertools import product
+import yaml
 from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.utils.task_group import TaskGroup
 
 from data.fetch_data import _fetch_data
-from data.load_config import load_config
 from data.load_dataset import load_dataset
 from data.run_experiment import _run_experiment
 from data.combine_data import _combine_batches
 
 
-# 모델, 샘플러, 그리드 서치 옵션 리스트
-# ["logistic", "randomforest", "xgboost", "catboost", "lightgbm", "mlp"]
-# [None, "over_random", "over_smote", "under_random"]
+# config.yaml 파일 로드
+with open('/opt/airflow/config/config.yaml', 'r') as file:
+    config = yaml.safe_load(file)
 
-models = ["logistic", "randomforest", "xgboost"]
-samplers = [None, "over_smote"]
+samplers = [None, "over_random", "over_smote", "under_random"]
+models = ["logistic", "randomforest", "xgboost", "catboost", "lightgbm", "mlp"]
 
-# 모든 조합 생성
+# 모델과 샘플러의 모든 조합 생성
 combinations = list(product(models, samplers))
-
 
 default_args = {"start_date": datetime(2024, 1, 1)}
 
@@ -59,36 +58,32 @@ with DAG(
     previous_group = None  # 이전 그룹을 추적하기 위한 변수
 
     for i, (model, sampler) in enumerate(combinations):
-        with TaskGroup(group_id=f"group_{i+1}") as model_experiment:
-            # 각 조합에 대해 load_config_task 생성
-            load_config_task = PythonOperator(
-                task_id=f"load_config",
-                python_callable=load_config,
-                op_kwargs={
-                    "config_path": "/opt/airflow/package/hktoss_package/config/config.py",
-                    "model": model,
-                    "sampler": sampler,
-                },
-            )
 
+        sampler_str = sampler if sampler is not None else "none"
+        
+        with TaskGroup(group_id=f"group_{i+1}") as model_experiment:
             # 각 조합에 대해 load_dataset_task 생성
             load_dataset_task = PythonOperator(
-                task_id=f"load_dataset",
+                task_id=f"load_dataset_{model}_{sampler_str}",
                 python_callable=load_dataset,
+                op_kwargs={
+                    "data_path": config['DATASET']["PATH"],
+                }
             )
 
             # 각 조합에 대해 run_experiment_task 생성
             run_experiment_task = PythonOperator(
-                task_id=f"run_experiment",
+                task_id=f"run_experiment_{model}_{sampler}",
                 python_callable=_run_experiment,
                 op_kwargs={
+                    "config_path": "/opt/airflow/config/config.yaml",
                     "model": model,
                     "sampler": sampler,
                 },
             )
 
             # 그룹 내에서 Task 의존성 설정
-            load_config_task >> load_dataset_task >> run_experiment_task
+            load_dataset_task >> run_experiment_task
 
         # 그룹 간 의존성 설정 (순차 실행 보장)
         if previous_group:
