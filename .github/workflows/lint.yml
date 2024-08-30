@@ -1,0 +1,21 @@
+name: Run Black Formatter
+
+on:
+    pull_request:
+        branches: ["main", "dev"]
+
+jobs:
+    format:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Python 3.10
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.10.14"
+            - name: Run Black Formatter
+              uses: psf/black@stable
+              with:
+                  options: "--check --verbose"
+                  src: "."
+                  version: "24.8.0"
