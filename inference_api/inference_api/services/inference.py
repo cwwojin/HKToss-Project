@@ -1,6 +1,7 @@
 from typing import List
 
 import mlflow.pyfunc as pyfunc
+import mlflow.sklearn
 import numpy as np
 import sqlalchemy
 from boto3 import client
@@ -76,11 +77,14 @@ class InferenceService:
         )
         return result
 
+    def _download_model(self, uri: str):
+        return mlflow.sklearn.load_model(model_uri=uri)
+
     def load_model_by_name(self, model_name: str):
         """load a model from S3 by name"""
         model_info = self.get_model_info(model_name)
 
-        return pyfunc.load_model(model_info["storage_location"])
+        return self._download_model(model_info["storage_location"])
 
     def load_best_model(self):
         all_model_info = self.get_all_model_info()
@@ -89,7 +93,7 @@ class InferenceService:
         ]
 
         self.model_name = best_model["name"]
-        self.model = pyfunc.load_model(best_model["storage_location"])
+        self.model = self._download_model(best_model["storage_location"])
 
     def _preprocess_input(self, input: DataFrame):
         features = [c for c in list(input.columns) if not c in ["NAME", "TARGET"]]
@@ -113,15 +117,22 @@ class InferenceService:
         # Setup model
         if model_name:
             model = self.load_model_by_name(model_name)
-            preds = model.predict(X)
+            pred_probs = model.predict_proba(X)
+            preds = np.argmax(pred_probs, axis=1)
         else:
             if not self.model:
                 self.load_best_model()
-            preds = self.model.predict(X)
+            pred_probs = self.model.predict_proba(X)
+            preds = np.argmax(pred_probs, axis=1)
 
         result = (
             DataFrame(
-                {"NAME": input["NAME"], "preds": Series(preds, index=y.index), "gt": y}
+                {
+                    "NAME": input["NAME"],
+                    "pred_probs": Series(pred_probs[:, 1], index=y.index),
+                    "preds": Series(preds, index=y.index),
+                    "gt": y,
+                }
             )
             .reset_index()
             .to_dict(orient="records")
