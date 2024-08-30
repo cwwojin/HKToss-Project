@@ -1,11 +1,54 @@
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib import font_manager, rc
-from datetime import datetime
 import os
+import os.path as path
 import platform
+from datetime import datetime
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import streamlit as st
+from boto3 import client
+from dotenv import load_dotenv
+from matplotlib import font_manager, rc
+
+# 환경변수 설정
+load_dotenv(".env")
+
+# 데이터셋 csv 파일 다운로드
+DATA_PATH = ".cache"
+demo_path = path.join(DATA_PATH, "dataset_demo.csv")
+total_path = path.join(DATA_PATH, "dataset_total.csv")
+
+if not path.isdir(DATA_PATH):
+    os.makedirs(DATA_PATH)
+
+if not path.isfile(demo_path):
+    s3 = client(
+        "s3",
+        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        region_name=os.environ.get("AWS_REGION"),
+    )
+    s3.download_file(
+        "hktoss-mlops",
+        "datasets/dataset_demo.csv",
+        demo_path,
+    )
+    s3.close()
+
+if not path.isfile(total_path):
+    s3 = client(
+        "s3",
+        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        region_name=os.environ.get("AWS_REGION"),
+    )
+    s3.download_file(
+        "hktoss-mlops",
+        "datasets/dataset_total.csv",
+        total_path,
+    )
+    s3.close()
 
 
 # HTML을 사용하여 스타일 추가
@@ -61,21 +104,15 @@ elif platform.system() == "Linux":  # 리눅스 (구글 콜랩)
 plt.rcParams["axes.unicode_minus"] = False  # 한글 폰트 사용시 마이너스 폰트 깨짐 해결
 
 
-# # 데이터셋 경로 설정
-# data_path = os.path.join("data", "demo_set.csv")
-
-demo_data_path = "/Users/khb43/Desktop/GIT_SHOWVINI/HKToss-Project/notebooks/.tmp/dataset/demo_set.csv"
-total_data_path = "/Users/khb43/Desktop/GIT_SHOWVINI/HKToss-Project/notebooks/.tmp/dataset/dataset_total.csv"
-
-
+# 데이터셋 불러오기
 @st.cache_data
 def load_demo_data():
-    df = pd.read_csv(demo_data_path, low_memory=False)
+    df = pd.read_csv(demo_path, low_memory=False)
     return df
 
 
 def load_total_data():
-    df = pd.read_csv(total_data_path, low_memory=False)
+    df = pd.read_csv(total_path, low_memory=False)
     return df
 
 
@@ -92,7 +129,7 @@ column_mapping = {
     "Debt_Repayment_Capability_Index": "부채 상환 가능성 지수",
     "LOAN_COUNT": "과거 대출 횟수",
     "AMT_CREDIT": "현재 대출 금액",
-    "name": "이름",
+    "NAME": "이름",
     "DAYS_BIRTH": "😀 나이",
     "CODE_GENDER": "성별",
     "FLAG_MOBIL": "📱 휴대전화 소유 여부",
@@ -303,9 +340,14 @@ if predict_button:
             ax.set_title(
                 f"전체 고객 대출 상환 비율 분포에서의 {name}님의 비율", color="white"
             )
+            ax.set_xlim(left=0.0, right=1.0)
+            ax.set_ylim(bottom=0, top=20000)
 
             sns.histplot(
-                total["Credit_Utilization_Ratio"], kde=True, ax=ax, color="skyblue"
+                total["Credit_Utilization_Ratio"],
+                # kde=True,
+                ax=ax,
+                color="skyblue",
             )
 
             # 사용자 포인트 표시
@@ -327,8 +369,15 @@ if predict_button:
             ax.set_title(
                 f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율", color="white"
             )
+            ax.set_xlim(left=0.0, right=5.0)
+            ax.set_ylim(bottom=0, top=7000)
 
-            sns.histplot(total["Debt_to_Income_Ratio"], kde=True, ax=ax, color="salmon")
+            sns.histplot(
+                total["Debt_to_Income_Ratio"],
+                # kde=True,
+                ax=ax,
+                color="salmon",
+            )
 
             # 사용자 포인트 표시
             ax.axvline(selected_user["부채 상환 비율"], color="red", linestyle="--")
