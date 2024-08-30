@@ -34,7 +34,7 @@ _C.LOGISTIC.solver = [
     "sag",
     "saga",
 ]
-_C.LOGISTIC.max_iter = [50, 100, 200]
+_C.LOGISTIC.max_iter = [100, 200]
 _C.LOGISTIC.class_weight = [
     None,
     "balanced",
@@ -42,8 +42,8 @@ _C.LOGISTIC.class_weight = [
 
 # Random Forest
 _C.RANDOMFOREST = CN()
-_C.RANDOMFOREST.n_estimators = [100, 200, 300]
-_C.RANDOMFOREST.max_depth = [10, 20, 30]
+_C.RANDOMFOREST.n_estimators = [100, 200]
+_C.RANDOMFOREST.max_depth = [10, 20]
 _C.RANDOMFOREST.min_samples_split = [2, 5, 10]
 _C.RANDOMFOREST.max_features = ["sqrt", "log2"]
 _C.RANDOMFOREST.class_weight = [
@@ -54,10 +54,10 @@ _C.RANDOMFOREST.class_weight = [
 
 # XGBoost
 _C.XGBOOST = CN()
-_C.XGBOOST.n_estimators = [100, 200, 300]
-_C.XGBOOST.max_depth = [3, 6, 9]
-_C.XGBOOST.learning_rate = [0.01, 0.1, 0.2]
-_C.XGBOOST.subsample = [0.6, 0.8, 1.0]
+_C.XGBOOST.n_estimators = [100, 200]
+_C.XGBOOST.max_depth = [3, 6]
+_C.XGBOOST.learning_rate = [0.01, 0.1]
+_C.XGBOOST.subsample = [0.8, 1.0]
 _C.XGBOOST.scale_pos_weight = [
     1,
     2,
@@ -67,17 +67,17 @@ _C.XGBOOST.scale_pos_weight = [
 
 # LightGBM
 _C.LIGHTGBM = CN()
-_C.LIGHTGBM.n_estimators = [100, 200, 300]
-_C.LIGHTGBM.max_depth = [10, 20, -1]
-_C.LIGHTGBM.learning_rate = [0.01, 0.1, 0.2]
-_C.LIGHTGBM.num_leaves = [30, 60, 120]
+_C.LIGHTGBM.n_estimators = [100, 200]
+_C.LIGHTGBM.max_depth = [10, 20]
+_C.LIGHTGBM.learning_rate = [0.01, 0.1]
+_C.LIGHTGBM.num_leaves = [30, 60]
 _C.LIGHTGBM.is_unbalance = [False, True]  # 불균형 데이터 처리를 위한 옵션
 
 # CatBoost
 _C.CATBOOST = CN()
-_C.CATBOOST.iterations = [100, 200, 300]
-_C.CATBOOST.depth = [4, 6, 8]
-_C.CATBOOST.learning_rate = [0.01, 0.1, 0.2]
+_C.CATBOOST.iterations = [100, 200]
+_C.CATBOOST.depth = [4, 6]
+_C.CATBOOST.learning_rate = [0.01, 0.1]
 _C.CATBOOST.l2_leaf_reg = [1, 3, 5]
 
 # MLP
