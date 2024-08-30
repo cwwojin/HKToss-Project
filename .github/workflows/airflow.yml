@@ -2,11 +2,10 @@ name: Deploy Airflow Server
 
 on:
     push:
-        branches: ["feature/airflow_workflow_WJ"]
+        branches: ["main"]
 
 env:
     AWS_REGION: ${{ secrets.MY_AWS_REGION }}
-    BRANCH: feature/airflow_workflow_WJ
 
 permissions:
     contents: read
@@ -32,7 +31,7 @@ jobs:
                   port: 22
                   script: |
                       cd ~/HKToss-Project
-                      git checkout ${{ env.BRANCH }}
+                      git checkout main
                       git fetch && git pull
                       aws s3 cp s3://hktoss-mlops/env/.env .env
                       docker compose -f docker-compose.airflow.yml up -d --force-recreate
