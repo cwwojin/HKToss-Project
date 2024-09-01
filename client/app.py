@@ -92,6 +92,20 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# HTML을 사용한 글씨 사이즈 조정: sub-subheader 글씨 사이즈 추가 (기존 subheader 글씨 크기: 24px)
+st.markdown(
+    """
+    <style>
+
+    .font-size-sub-subheader {
+        font-size:20px !important;
+        font-weight: bold !important; /* 글씨체를 굵게 설정 */
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # font_name = font_manager.FontProperties(fname=font_path).get_name()
@@ -160,46 +174,42 @@ loan_types = {
     "Microloan": "소액/비상금대출",
 }
 
-# 사이드바 위젯 구성
-name = st.sidebar.selectbox("이름을 선택하세요", demo["이름"].unique())
+with st.sidebar.form(key="sidebar_form"):
+    name = st.selectbox("이름을 선택하세요", demo["이름"].unique())
 
-# 빈 공간 추가
-st.sidebar.write(" ")
-st.sidebar.write(" ")
+    # 빈 공간 추가
+    st.write(" ")
+    st.write(" ")
 
-selected_loan_type = st.sidebar.selectbox(
-    "대출상품을 선택하세요",
-    options=list(loan_types.keys()),
-    format_func=lambda x: loan_types[x],
-)
+    selected_loan_type = st.selectbox(
+        "대출상품을 선택하세요",
+        options=list(loan_types.keys()),
+        format_func=lambda x: loan_types[x],
+    )
 
-# 빈 공간 추가
-st.sidebar.write(" ")
-st.sidebar.write(" ")
+    # 빈 공간 추가
+    st.write(" ")
+    st.write(" ")
 
-credit_min = st.sidebar.slider(
-    "대출 금액 범위 선택 (최대값: ₩50,000,000은 선택 불가)",
-    min_value=1_000_000,
-    max_value=50_000_000,
-    value=1_000_000,
-    step=1_000_000,
-    format="₩%d",
-)
+    credit_min = st.slider(
+        "대출 금액 범위 선택 (최대값: ₩50,000,000은 선택 불가)",
+        min_value=1_000_000,
+        max_value=50_000_000,
+        value=1_000_000,
+        step=1_000_000,
+        format="₩%d",
+    )
 
-# 최댓값은 50,000,000으로 고정
-credit_max = 50_000_000
-credit_range_text = (
-    f"₩{credit_min // 1_000_000}천만 원 ~ ₩{credit_max // 1_000_000}천만 원"
-)
-st.sidebar.write(f"선택된 대출 금액 범위: {credit_range_text}")
+    # 최댓값은 50,000,000으로 고정
+    credit_max = 50_000_000
+    credit_range_text = (
+        f"₩{credit_min // 1_000_000}천만 원 ~ ₩{credit_max // 1_000_000}천만 원"
+    )
+    # st.write(f"선택된 대출 금액 범위: {credit_range_text}")
 
-# '확인하기' 버튼을 추가하여 연체 예측 결과를 확인
-predict_button = st.sidebar.button("확인하기")
+    # '확인하기' 버튼을 추가하여 연체 예측 결과를 확인
+    predict_button = st.form_submit_button("확인하기")
 
-# 데이터 필터링
-filtered_demo = demo[
-    (demo["현재 대출 금액"] >= credit_min) & (demo["현재 대출 금액"] <= credit_max)
-]
 
 # 본 화면
 
@@ -230,7 +240,7 @@ if not predict_button:
     )
 
 if predict_button:
-    st.header(f"{name}님의 연체 예측 결과")
+    st.title(f"{name}님의 연체 예측 결과")
 
     selected_user = demo[demo["이름"] == name]
 
@@ -275,26 +285,42 @@ if predict_button:
 
         # 연수입
         user_income = selected_user["연간 소득"]
-        income_percentile = (total["AMT_INCOME_TOTAL"] < user_income).mean() * 100
-        st.write(f"💶 **나의 연수입:**")
-        st.write(f"내 연수입은 상위 {income_percentile:.1f}%에요.")
+        income_percentile = 100 - ((total["AMT_INCOME_TOTAL"] < user_income).mean() * 100)
+
+        st.markdown(
+            "<p class='font-size-sub-subheader'>💶 나의 연수입</p>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+        f"<p style='font-size: 16px;'>➔  내 연수입은 상위 <span style='color: #30e830; font-weight: bold;'>{income_percentile:.1f}%</span>에요.</p>",
+        unsafe_allow_html=True,
+        )
 
         # 부양 부담 지수 (Dependents_Index)
         dependents_index = selected_user.get("Dependents_Index", "정보 없음")
-        st.write(f"👶 부양 부담 지수: {dependents_index}")
+
+        st.markdown(
+            "<p class='font-size-sub-subheader'>"
+            f"👶 부양 부담 지수: <span style='color: #f6f6c5;'>{dependents_index}</span>"
+            "</p>",
+            unsafe_allow_html=True,
+        )
         st.write(
-            ": 자녀에 대한 부양 부담이 가족 내에서 얼마나 큰 비중을 차지하는지를 나타내요."
+            "➔  자녀에 대한 부양 부담이 가족 내에서 얼마나 큰 비중을 차지하는지를 나타내요."
         )
 
         # 소득 대비 부양 부담 지수 (Income_to_Dependents_Ratio)
-        income_to_dependents_ratio = selected_user.get(
-            "Income_to_Dependents_Ratio", "정보 없음"
-        )
-        st.write(f"🙋‍♂️🙋‍♀️ 소득 대비 부양 부담 지수: {income_to_dependents_ratio}")
-        st.write(
-            ": 개인의 소득이 자녀 부양에 얼마나 적절하게 분배될 수 있는지를 나타내요."
-        )
+        income_to_dependents_ratio = selected_user.get("Income_to_Dependents_Ratio", "정보 없음")
 
+        st.markdown(
+            "<p class='font-size-sub-subheader'>"
+            f"🙋‍♂️🙋‍♀️ 소득 대비 부양 부담 지수: <span style='color: #f6f6c5;'>{income_to_dependents_ratio:.0f}</span>"
+            "</p>",
+            unsafe_allow_html=True,
+        )
+        st.write(
+            "➔  개인의 소득이 자녀 부양에 얼마나 적절하게 분배될 수 있는지를 나타내요."
+        )
         # 점선 추가
         st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
@@ -309,13 +335,28 @@ if predict_button:
                     "부채 상환 가능성 지수", None
                 )  # 'Debt_Repayment_Capability_Index' 컬럼 매핑된 이름 사용
             if dsr is not None:
-                st.write(f"**💼 DSR:**")
-                st.write(
-                    f"내가 버는 총 소득 중에서 {dsr:.2f}%를 대출 상환에 쓰고 있어요."
+                st.markdown(
+                    "<p class='font-size-sub-subheader'>"
+                    f"💼 DSR"
+                    "</p>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                f"<p style='font-size: 16px;'><b>DSR이란?</b> '내 소득 중 빚 갚는 데 쓰는 돈의 비율'을 의미해요.</p>",
+                unsafe_allow_html=True,
+                )
+                st.markdown(
+                f"<p style='font-size: 16px;'>➔  내가 버는 총 소득 중에서 <span style='color: #30e830; font-weight: bold;'>{dsr:.2f}%</span>를 대출 상환에 쓰고 있어요.</p>",
+                unsafe_allow_html=True,
                 )
 
             # 대출 대비 연체 횟수
-            st.write(f"**💸 대출 횟수:**")
+            st.markdown(
+                    "<p class='font-size-sub-subheader'>"
+                    f"💸 대출 횟수"
+                    "</p>",
+                    unsafe_allow_html=True,
+                )
             st.write(
                 f"(대출 대비 연체 횟수 비율: {selected_user['대출 대비 연체 횟수 비율']})"
             )
@@ -355,8 +396,13 @@ if predict_button:
 
             st.pyplot(fig)
 
-            # 대출 상환 비율 차트
-            st.write("💸 대출 상환 비율")
+            # 대출 상환 비율 차트            
+            st.markdown(
+                    "<p class='font-size-sub-subheader'>"
+                    "💸 대출 상환 비율"
+                    "</p>",
+                    unsafe_allow_html=True,
+                )
 
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
@@ -393,7 +439,12 @@ if predict_button:
             st.pyplot(fig)
 
             # 연 수입 대비 총 부채 비율 차트
-            st.write("💸 연 수입 대비 총 부채 비율")
+            st.markdown(
+                    "<p class='font-size-sub-subheader'>"
+                    "💸 연 수입 대비 총 부채 비율"
+                    "</p>",
+                    unsafe_allow_html=True,
+                )
 
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
@@ -439,10 +490,10 @@ if predict_button:
         # 신청한 대출 정보와 평가 버튼 추가
         st.subheader("신청한 대출 정보")
         st.write(
-            f"선택한 대출 상품: {loan_types[selected_loan_type]}"
+            f"🏦 **선택한 대출 상품:** {loan_types[selected_loan_type]}"
         )  # 선택한 대출 상품 표시
         st.write(
-            f"선택한 대출 금액 범위: {credit_range_text}"
+            f"💵 **선택한 대출 금액 범위:** {credit_range_text}"
         )  # 선택한 대출 금액 범위 표시
 
         # 대출 가능성 평가 버튼
