@@ -3,6 +3,10 @@ FROM amd64/python:3.10.14-slim
 # Working Directory
 WORKDIR /usr/src/app
 
+# Install Packages
+RUN apt-get update && \
+    apt-get install libgomp1
+
 # Copy files
 COPY .env .
 COPY ./inference_api .

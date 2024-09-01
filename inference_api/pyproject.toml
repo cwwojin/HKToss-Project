@@ -17,6 +17,9 @@ psycopg2-binary = "^2.9.9"
 pandas = "^2.2.2"
 mlflow = "2.15.1"
 scipy = "1.14.0"
+xgboost = "2.1.1"
+lightgbm = "4.5.0"
+catboost = "1.2.5"
 
 
 
