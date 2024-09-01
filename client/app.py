@@ -20,7 +20,7 @@ from utils import APIHelper
 api = APIHelper(
     api_url=os.environ.get("INFERENCE_API_URL"),
     api_key=os.environ.get("INFERENCE_API_KEY"),
-)
+)        
 
 # 데이터셋 csv 파일 다운로드
 DATA_PATH = ".cache"
@@ -204,28 +204,39 @@ with st.sidebar.form(key="sidebar_form"):
     st.write(" ")
     st.write(" ")
 
-    credit_min = st.slider(
-        "대출 금액 범위 선택 (최대값: ₩50,000,000은 선택 불가)",
-        min_value=1_000_000,
-        max_value=50_000_000,
-        value=1_000_000,
-        step=1_000_000,
-        format="₩%d",
+    # # 옵션 리스트를 문자열 형식으로 생성
+    # options = [f"₩{x:,}" for x in range(1_000_000, 50_000_000, 1_000_000)]
+
+    # # select_slider를 사용하여 사용자 정의 슬라이더 구현
+    # credit_min = st.select_slider(
+    #     "대출 금액 선택 (최대값: ₩50,000,000은 선택 불가)",
+    #     options=options,  # 포맷된 옵션 사용
+    #     value="₩1,000,000",  # 기본값 설정
+    # )
+
+    # # # 선택된 금액 출력
+    # # st.write(f"선택한 대출 금액: {credit_min}")
+
+    # # '확인하기' 버튼을 추가하여 연체 예측 결과를 확인
+    # predict_button = st.form_submit_button("확인하기")
+
+    # text_input을 사용하여 대출 금액 직접 입력
+    selected_amount = st.text_input(
+        "대출 금액 입력 (예: 1000000)",
+        value="1000000"  # 기본값 설정
     )
 
-    # 최댓값은 50,000,000으로 고정
-    credit_max = 50_000_000
-    credit_range_text = (
-        f"₩{credit_min // 1_000_000}천만 원 ~ ₩{credit_max // 1_000_000}천만 원"
-    )
-    # st.write(f"선택된 대출 금액 범위: {credit_range_text}")
+    try:
+        selected_amount_int = int(selected_amount)
+        if not(1_000_000 <= selected_amount_int <= 50_000_000):
+            st.write("대출 금액이 유효한 범위 내에 있지 않습니다. 1,000,000원에서 50,000,000원 사이로 입력하세요.")
+    except ValueError:
+        st.write("유효한 숫자를 입력하세요.")
 
     # '확인하기' 버튼을 추가하여 연체 예측 결과를 확인
     predict_button = st.form_submit_button("확인하기")
 
-
 # 본 화면
-
 
 # 시각화 함수 정의
 def create_style(ax):
@@ -504,8 +515,8 @@ if predict_button:
             f"🏦 **선택한 대출 상품:** {loan_types[selected_loan_type]}"
         )  # 선택한 대출 상품 표시
         st.write(
-            f"💵 **선택한 대출 금액 범위:** {credit_range_text}"
-        )  # 선택한 대출 금액 범위 표시
+            f"💵 **선택한 대출 금액:** ₩{selected_amount_int:,}원"
+        )  # 선택한 대출 금액 표시
 
         # TEMP : API Call check
         body = (
