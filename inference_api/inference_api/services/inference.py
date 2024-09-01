@@ -17,7 +17,8 @@ class InferenceService:
     engine: Engine
     # Best Model
     model_name: str
-    model: pyfunc.PyFuncModel
+    # Cached Model
+    cached_model_name: str
 
     def __init__(self):
         self.s3 = client(
@@ -29,6 +30,8 @@ class InferenceService:
         self.engine = sqlalchemy.create_engine(config.mlflow_db_uri)
         self.model_name = None
         self.model = None
+        self.cached_model = None
+        self.cached_model_name = None
 
     def _run_select_query(self, query: str, args: dict = None):
         """retrieve rows from DB."""
@@ -82,9 +85,11 @@ class InferenceService:
 
     def load_model_by_name(self, model_name: str):
         """load a model from S3 by name"""
-        model_info = self.get_model_info(model_name)
+        if self.cached_model_name != model_name:
+            model_info = self.get_model_info(model_name)
 
-        return self._download_model(model_info["storage_location"])
+            self.cached_model_name = model_name
+            self.cached_model = self._download_model(model_info["storage_location"])
 
     def load_best_model(self):
         all_model_info = self.get_all_model_info()
@@ -116,8 +121,8 @@ class InferenceService:
 
         # Setup model
         if model_name:
-            model = self.load_model_by_name(model_name)
-            pred_probs = model.predict_proba(X)
+            self.load_model_by_name(model_name)
+            pred_probs = self.cached_model.predict_proba(X)
             preds = np.argmax(pred_probs, axis=1)
         else:
             if not self.model:
