@@ -1,8 +1,8 @@
 services:
     # API Container
-    api:
+    inference-api:
         platform: linux/amd64
-        container_name: inference_api
+        container_name: inference-api
         build:
             context: .
             dockerfile: dockerfiles/Dockerfile.api

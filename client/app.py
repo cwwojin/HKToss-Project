@@ -165,6 +165,14 @@ column_mapping = {
     "AMT_INCOME_TOTAL": "연간 소득",
     "LOAN_STATUS": "대출 상태",
 }
+column_mapping_reverse = {v: k for (k, v) in column_mapping.items()}
+
+
+def preprocess_api_input(selected_user):
+    return (
+        pd.DataFrame(selected_user).transpose().rename(columns=column_mapping_reverse)
+    )
+
 
 # 컬럼명 매핑 적용
 demo.rename(columns=column_mapping, inplace=True)
@@ -498,6 +506,17 @@ if predict_button:
         st.write(
             f"💵 **선택한 대출 금액 범위:** {credit_range_text}"
         )  # 선택한 대출 금액 범위 표시
+
+        # TEMP : API Call check
+        body = (
+            pd.DataFrame(selected_user)
+            .transpose()
+            .rename(columns=column_mapping_reverse)
+        )
+        eval_result = api.run_inference(
+            df=body,
+        )
+        st.dataframe(eval_result)
 
         # 대출 가능성 평가 버튼
         evaluate_button = st.button("대출 가능성 평가")
