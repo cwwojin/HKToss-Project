@@ -70,21 +70,28 @@ st.markdown(
         color: white;  /* 텍스트 색상 */
     }
 
+    /* 드롭다운 클릭 시 테두리 색상 변경 */
+    .stSelectbox > div > div {
+        border-color: white !important;  /* 테두리 색상을 흰색으로 변경 */
+    }
+
     /* 슬라이더 스타일 설정 */
     .css-16ws1b0 a {
         background-color: #0064FF !important;  /* Toss Blue */
     }
 
     /* 버튼 스타일 설정 */
-    .css-1cpxqw2 {
-        background-color: #0064FF !important;  /* Toss Blue */
+    button[kind="secondary"] {
         color: white;  /* 버튼 텍스트 색상 */
+        border: 2px solid white !important;  /* 버튼 테두리 색상 */
+        border-radius: 5px;  /* 버튼 테두리 둥글기 */
     }
 
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 
 
 # font_name = font_manager.FontProperties(fname=font_path).get_name()
@@ -125,17 +132,17 @@ total = load_total_data()
 column_mapping = {
     "Credit_Utilization_Ratio": "대출 상환 비율",
     "Debt_to_Income_Ratio": "부채 상환 비율",
-    "OVERDUE_RATIO": "💸 대출 대비 연체 횟수",
+    "OVERDUE_RATIO": "대출 대비 연체 횟수 비율",
     "Debt_Repayment_Capability_Index": "부채 상환 가능성 지수",
     "LOAN_COUNT": "과거 대출 횟수",
     "AMT_CREDIT": "현재 대출 금액",
     "NAME": "이름",
-    "DAYS_BIRTH": "😀 나이",
+    "DAYS_BIRTH": "나이",
     "CODE_GENDER": "성별",
-    "FLAG_MOBIL": "📱 휴대전화 소유 여부",
-    "FLAG_OWN_CAR": "🚗 자차 소유 여부",  # 열 이름 확인 후 올바르게 수정
-    "FLAG_OWN_REALTY": "🏡 부동산 소유 여부",
-    "DAYS_EMPLOYED": "🏢 재직 여부",
+    "FLAG_MOBIL": "휴대전화 소유 여부",
+    "FLAG_OWN_CAR": "자차 소유 여부",  # 열 이름 확인 후 올바르게 수정
+    "FLAG_OWN_REALTY": "부동산 소유 여부",
+    "DAYS_EMPLOYED": "재직 여부",
     "AMT_INCOME_TOTAL": "연간 소득",
     "LOAN_STATUS": "대출 상태",
 }
@@ -214,6 +221,14 @@ def create_style(ax):
 if "show_more" not in st.session_state:
     st.session_state.show_more = False
 
+
+# 조건을 설정한 후 확인하기를 눌러주세요 문구 추가
+if not predict_button:
+    st.markdown(
+        "<p style='text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 20px;'>좌측 사이드바에서 조건을 설정한 후 확인하기를 눌러주세요</p>",
+        unsafe_allow_html=True,
+    )
+
 if predict_button:
     st.header(f"{name}님의 연체 예측 결과")
 
@@ -237,23 +252,21 @@ if predict_button:
         # 점선 추가
         st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
-        age = calculate_age(selected_user["😀 나이"])
+        age = calculate_age(selected_user["나이"])
 
         st.subheader("현재 나의 정보")
         st.markdown(f"**😀 나이:** {age} 세")
         st.markdown(f"**👫 성별:** {selected_user['성별']}")  # 성별 추가
         st.markdown(
-            f"**📱 휴대전화 소유 여부:** {'Y' if selected_user['📱 휴대전화 소유 여부'] else 'N'}"
+            f"**📱 휴대전화 소유 여부:** {'Y' if selected_user['휴대전화 소유 여부'] else 'N'}"
         )
         st.markdown(
-            f"**🚗 자차 소유 여부:** {'Y' if selected_user['🚗 자차 소유 여부'] else 'N'}"
+            f"**🚗 자차 소유 여부:** {'Y' if selected_user['자차 소유 여부'] else 'N'}"
         )
         st.markdown(
-            f"**🏡 부동산 소유 여부:** {'Y' if selected_user['🏡 부동산 소유 여부'] else 'N'}"
+            f"**🏡 부동산 소유 여부:** {'Y' if selected_user['부동산 소유 여부'] else 'N'}"
         )
-        st.markdown(
-            f"**🏢 재직 여부:** {'Y' if selected_user['🏢 재직 여부'] else 'N'}"
-        )
+        st.markdown(f"**🏢 재직 여부:** {'Y' if selected_user['재직 여부'] else 'N'}")
 
         # 점선 추가
         st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
@@ -302,14 +315,16 @@ if predict_button:
                 )
 
             # 대출 대비 연체 횟수
+            st.write(f"**💸 대출 횟수:**")
             st.write(
-                f"**💸 대출 대비 연체 횟수:** {selected_user['💸 대출 대비 연체 횟수']}"
+                f"(대출 대비 연체 횟수 비율: {selected_user['대출 대비 연체 횟수 비율']})"
             )
 
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
             ax.set_title(
-                f"전체 고객 대출 횟수 대비 {name}님의 과거 대출 횟수", color="white"
+                f"전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수",
+                color="white",
             )
 
             bins_range = range(0, int(demo["과거 대출 횟수"].max()) + 1)
@@ -317,7 +332,7 @@ if predict_button:
                 total["LOAN_COUNT"],
                 kde=False,
                 ax=ax,
-                color="lightblue",
+                color="#0064FF",  # '토스 블루' 색상으로 설정
                 bins=bins_range,
             )
 
@@ -331,23 +346,31 @@ if predict_button:
                 ha="center",
             )
 
+            # X축 레이블 설정
+            ax.set_xlabel("과거 대출 횟수", color="white")
+
+            # Y축 레이블 숨기기
+            ax.set_ylabel("")
+            ax.get_yaxis().set_visible(False)  # Y축 눈금 숨기기
+
             st.pyplot(fig)
 
             # 대출 상환 비율 차트
-            st.write("대출 상환 비율")
+            st.write("💸 대출 상환 비율")
+
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
             ax.set_title(
-                f"전체 고객 대출 상환 비율 분포에서의 {name}님의 비율", color="white"
+                f"전체 고객 대출 상환 비율 분포 중 {name}님의 비율", color="white"
             )
             ax.set_xlim(left=0.0, right=1.0)
-            ax.set_ylim(bottom=0, top=20000)
+            ax.set_ylim(bottom=0, top=15000)
 
             sns.histplot(
                 total["Credit_Utilization_Ratio"],
-                # kde=True,
+                kde=False,
                 ax=ax,
-                color="skyblue",
+                color="#0064FF",  # '토스 블루' 색상으로 설정
             )
 
             # 사용자 포인트 표시
@@ -360,23 +383,31 @@ if predict_button:
                 ha="center",
             )
 
+            # X축 레이블 설정
+            ax.set_xlabel("대출 상환 비율", color="white")
+
+            # Y축 레이블 숨기기
+            ax.set_ylabel("")
+            ax.get_yaxis().set_visible(False)  # Y축 눈금 숨기기
+
             st.pyplot(fig)
 
             # 연 수입 대비 총 부채 비율 차트
-            st.write("연 수입 대비 총 부채 비율")
+            st.write("💸 연 수입 대비 총 부채 비율")
+
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
             ax.set_title(
                 f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율", color="white"
             )
             ax.set_xlim(left=0.0, right=5.0)
-            ax.set_ylim(bottom=0, top=7000)
+            ax.set_ylim(bottom=0, top=8000)
 
             sns.histplot(
                 total["Debt_to_Income_Ratio"],
-                # kde=True,
+                kde=False,
                 ax=ax,
-                color="salmon",
+                color="#0064FF",  # '토스 블루' 색상으로 설정
             )
 
             # 사용자 포인트 표시
@@ -389,6 +420,13 @@ if predict_button:
                 ha="center",
             )
 
+            # X축 레이블 설정
+            ax.set_xlabel("연 수입 대비 총 부채 비율", color="white")
+
+            # Y축 레이블 숨기기
+            ax.set_ylabel("")
+            ax.get_yaxis().set_visible(False)  # Y축 눈금 숨기기
+
             st.pyplot(fig)
 
         else:
@@ -398,9 +436,14 @@ if predict_button:
         # 점선 추가
         st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
-        # 대출 상품 정보와 평가 버튼 추가
+        # 신청한 대출 정보와 평가 버튼 추가
         st.subheader("신청한 대출 정보")
-        st.write(f"선택한 대출 상품: {selected_loan_type}")
+        st.write(
+            f"선택한 대출 상품: {loan_types[selected_loan_type]}"
+        )  # 선택한 대출 상품 표시
+        st.write(
+            f"선택한 대출 금액 범위: {credit_range_text}"
+        )  # 선택한 대출 금액 범위 표시
 
         # 대출 가능성 평가 버튼
         evaluate_button = st.button("대출 가능성 평가")
@@ -410,7 +453,7 @@ if predict_button:
 
             # 재직 기간 및 연수입 기준
             today = datetime.today()
-            employment_duration_days = -selected_user["🏢 재직 여부"]
+            employment_duration_days = -selected_user["재직 여부"]
             employment_start_date = today - pd.to_timedelta(
                 employment_duration_days, unit="D"
             )
