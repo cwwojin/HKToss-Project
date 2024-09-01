@@ -119,15 +119,43 @@ class APIHelper:
         result_df = result_df.reset_index(drop=True)
         return result_df
 
-    def run_permute_inference(self, row: DataFrame):
+    def run_permute_inference(self, row: DataFrame, model_name: str = None):
         perm_df = self.get_permutations(row)
         body = json.dumps({"data": perm_df.to_dict(orient="records")})
         result = requests.post(
             f"{self.API_URL}/inference",
+            params={"model_name": model_name} if model_name else None,
             data=body,
             headers={"access_token": self.API_KEY},
         ).json()
+        result = DataFrame.from_records(result)
+
+        # Post-processing
+        result["pred_probs_loan"] = 1 - result["pred_probs"]
+        result["preds_loan"] = 1 - result["preds"]
+
         combined_result = pd.concat(
-            [result, perm_df.drop(columns=["SK_ID_CURR", "NAME"])], axis=1
+            [result, perm_df.drop(columns=["SK_ID_CURR", "NAME"])],
+            axis=1,
+        )
+        return combined_result
+
+    def run_inference(self, df: DataFrame, model_name: str = None):
+        body = json.dumps({"data": df.to_dict(orient="records")})
+        result = requests.post(
+            f"{self.API_URL}/inference",
+            params={"model_name": model_name} if model_name else None,
+            data=body,
+            headers={"access_token": self.API_KEY},
+        ).json()
+        result = DataFrame.from_records(result)
+
+        # Post-processing
+        result["pred_probs_loan"] = 1 - result["pred_probs"]
+        result["preds_loan"] = 1 - result["preds"]
+
+        combined_result = pd.concat(
+            [result, df.drop(columns=["SK_ID_CURR", "NAME"])],
+            axis=1,
         )
         return combined_result
