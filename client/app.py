@@ -285,15 +285,17 @@ if predict_button:
 
         # 연수입
         user_income = selected_user["연간 소득"]
-        income_percentile = 100 - ((total["AMT_INCOME_TOTAL"] < user_income).mean() * 100)
+        income_percentile = 100 - (
+            (total["AMT_INCOME_TOTAL"] < user_income).mean() * 100
+        )
 
         st.markdown(
             "<p class='font-size-sub-subheader'>💶 나의 연수입</p>",
             unsafe_allow_html=True,
         )
         st.markdown(
-        f"<p style='font-size: 16px;'>➔  내 연수입은 상위 <span style='color: #30e830; font-weight: bold;'>{income_percentile:.1f}%</span>에요.</p>",
-        unsafe_allow_html=True,
+            f"<p style='font-size: 16px;'>➔  내 연수입은 상위 <span style='color: #30e830; font-weight: bold;'>{income_percentile:.1f}%</span>에요.</p>",
+            unsafe_allow_html=True,
         )
 
         # 부양 부담 지수 (Dependents_Index)
@@ -310,7 +312,9 @@ if predict_button:
         )
 
         # 소득 대비 부양 부담 지수 (Income_to_Dependents_Ratio)
-        income_to_dependents_ratio = selected_user.get("Income_to_Dependents_Ratio", "정보 없음")
+        income_to_dependents_ratio = selected_user.get(
+            "Income_to_Dependents_Ratio", "정보 없음"
+        )
 
         st.markdown(
             "<p class='font-size-sub-subheader'>"
@@ -336,27 +340,23 @@ if predict_button:
                 )  # 'Debt_Repayment_Capability_Index' 컬럼 매핑된 이름 사용
             if dsr is not None:
                 st.markdown(
-                    "<p class='font-size-sub-subheader'>"
-                    f"💼 DSR"
-                    "</p>",
+                    "<p class='font-size-sub-subheader'>" f"💼 DSR" "</p>",
                     unsafe_allow_html=True,
                 )
                 st.markdown(
-                f"<p style='font-size: 16px;'><b>DSR이란?</b> '내 소득 중 빚 갚는 데 쓰는 돈의 비율'을 의미해요.</p>",
-                unsafe_allow_html=True,
+                    f"<p style='font-size: 16px;'><b>DSR이란?</b> '내 소득 중 빚 갚는 데 쓰는 돈의 비율'을 의미해요.</p>",
+                    unsafe_allow_html=True,
                 )
                 st.markdown(
-                f"<p style='font-size: 16px;'>➔  내가 버는 총 소득 중에서 <span style='color: #30e830; font-weight: bold;'>{dsr:.2f}%</span>를 대출 상환에 쓰고 있어요.</p>",
-                unsafe_allow_html=True,
+                    f"<p style='font-size: 16px;'>➔  내가 버는 총 소득 중에서 <span style='color: #30e830; font-weight: bold;'>{dsr:.2f}%</span>를 대출 상환에 쓰고 있어요.</p>",
+                    unsafe_allow_html=True,
                 )
 
             # 대출 대비 연체 횟수
             st.markdown(
-                    "<p class='font-size-sub-subheader'>"
-                    f"💸 대출 횟수"
-                    "</p>",
-                    unsafe_allow_html=True,
-                )
+                "<p class='font-size-sub-subheader'>" f"💸 대출 횟수" "</p>",
+                unsafe_allow_html=True,
+            )
             st.write(
                 f"(대출 대비 연체 횟수 비율: {selected_user['대출 대비 연체 횟수 비율']})"
             )
@@ -396,13 +396,11 @@ if predict_button:
 
             st.pyplot(fig)
 
-            # 대출 상환 비율 차트            
+            # 대출 상환 비율 차트
             st.markdown(
-                    "<p class='font-size-sub-subheader'>"
-                    "💸 대출 상환 비율"
-                    "</p>",
-                    unsafe_allow_html=True,
-                )
+                "<p class='font-size-sub-subheader'>" "💸 대출 상환 비율" "</p>",
+                unsafe_allow_html=True,
+            )
 
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
@@ -440,11 +438,11 @@ if predict_button:
 
             # 연 수입 대비 총 부채 비율 차트
             st.markdown(
-                    "<p class='font-size-sub-subheader'>"
-                    "💸 연 수입 대비 총 부채 비율"
-                    "</p>",
-                    unsafe_allow_html=True,
-                )
+                "<p class='font-size-sub-subheader'>"
+                "💸 연 수입 대비 총 부채 비율"
+                "</p>",
+                unsafe_allow_html=True,
+            )
 
             fig, ax = plt.subplots(figsize=(8, 4))
             create_style(ax)
