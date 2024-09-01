@@ -3,16 +3,24 @@ import os.path as path
 import platform
 from datetime import datetime
 
+# 환경변수 설정
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import streamlit as st
 from boto3 import client
-from dotenv import load_dotenv
 from matplotlib import font_manager, rc
+from utils import APIHelper
 
-# 환경변수 설정
-load_dotenv(".env")
+# API Helper
+api = APIHelper(
+    api_url=os.environ.get("INFERENCE_API_URL"),
+    api_key=os.environ.get("INFERENCE_API_KEY"),
+)
 
 # 데이터셋 csv 파일 다운로드
 DATA_PATH = ".cache"
@@ -20,7 +28,7 @@ demo_path = path.join(DATA_PATH, "dataset_demo.csv")
 total_path = path.join(DATA_PATH, "dataset_total.csv")
 
 if not path.isdir(DATA_PATH):
-    os.makedirs(DATA_PATH)
+    os.makedirs(DATA_PATH, exist_ok=True)
 
 if not path.isfile(demo_path):
     s3 = client(
@@ -106,7 +114,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 # font_name = font_manager.FontProperties(fname=font_path).get_name()
 # rc('font', family=font_name)
