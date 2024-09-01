@@ -4,6 +4,9 @@
 .gitignore
 .dockerignore
 
+# Cache
+.cache
+
 # Temp directory
 .temp
 .tmp
