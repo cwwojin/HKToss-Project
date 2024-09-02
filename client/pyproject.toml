@@ -12,10 +12,10 @@ python = "^3.10"
 streamlit = "1.37.1"
 pandas = "2.0.3"
 matplotlib = "3.7.5"
-seaborn = "0.13.2"
 python-dotenv = "^1.0.1"
 boto3 = "^1.35.10"
 requests = "^2.32.3"
+plotly = "^5.24.0"
 
 
 [build-system]

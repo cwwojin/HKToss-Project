@@ -10,7 +10,7 @@ load_dotenv(".env")
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+import plotly.graph_objects as go
 import streamlit as st
 from boto3 import client
 from matplotlib import font_manager, rc
@@ -20,7 +20,7 @@ from utils import APIHelper
 api = APIHelper(
     api_url=os.environ.get("INFERENCE_API_URL"),
     api_key=os.environ.get("INFERENCE_API_KEY"),
-)        
+)
 
 # 데이터셋 csv 파일 다운로드
 DATA_PATH = ".cache"
@@ -222,14 +222,15 @@ with st.sidebar.form(key="sidebar_form"):
 
     # text_input을 사용하여 대출 금액 직접 입력
     selected_amount = st.text_input(
-        "대출 금액 입력 (예: 1000000)",
-        value="1000000"  # 기본값 설정
+        "대출 금액 입력 (예: 1000000)", value="1000000"  # 기본값 설정
     )
 
     try:
         selected_amount_int = int(selected_amount)
-        if not(1_000_000 <= selected_amount_int <= 50_000_000):
-            st.write("대출 금액이 유효한 범위 내에 있지 않습니다. 1,000,000원에서 50,000,000원 사이로 입력하세요.")
+        if not (1_000_000 <= selected_amount_int <= 50_000_000):
+            st.write(
+                "대출 금액이 유효한 범위 내에 있지 않습니다. 1,000,000원에서 50,000,000원 사이로 입력하세요."
+            )
     except ValueError:
         st.write("유효한 숫자를 입력하세요.")
 
@@ -237,6 +238,7 @@ with st.sidebar.form(key="sidebar_form"):
     predict_button = st.form_submit_button("확인하기")
 
 # 본 화면
+
 
 # 시각화 함수 정의
 def create_style(ax):
@@ -376,7 +378,7 @@ if predict_button:
                     unsafe_allow_html=True,
                 )
 
-            # 대출 대비 연체 횟수
+            # Plotly Chart 1. 대출 대비 연체 횟수
             st.markdown(
                 "<p class='font-size-sub-subheader'>" f"💸 대출 횟수" "</p>",
                 unsafe_allow_html=True,
@@ -385,82 +387,67 @@ if predict_button:
                 f"(대출 대비 연체 횟수 비율: {selected_user['대출 대비 연체 횟수 비율']})"
             )
 
-            fig, ax = plt.subplots(figsize=(8, 4))
-            create_style(ax)
-            ax.set_title(
-                f"전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수",
-                color="white",
+            fig = go.Figure()
+            fig.add_trace(
+                go.Histogram(
+                    x=total["LOAN_COUNT"],
+                    name="",
+                    hovertemplate="과거 대출 횟수: %{x}, Count: %{y}",
+                    xbins=dict(
+                        start=0, end=int(demo["과거 대출 횟수"].max()) + 1, size=1
+                    ),
+                    marker_color="#0064FF",
+                )
             )
-
-            bins_range = range(0, int(demo["과거 대출 횟수"].max()) + 1)
-            sns.histplot(
-                total["LOAN_COUNT"],
-                kde=False,
-                ax=ax,
-                color="#0064FF",  # '토스 블루' 색상으로 설정
-                bins=bins_range,
+            fig.add_vline(
+                x=loan_count,
+                line_color="#FF4B4B",
+                line_dash="dash",
+                annotation_text=f"{name}: {loan_count}번",
+                annotation_font_color="#FF4B4B",
             )
-
-            # 사용자 포인트 표시
-            ax.axvline(loan_count, color="red", linestyle="--")
-            ax.text(
-                loan_count,
-                ax.get_ylim()[1] * 0.9,
-                f"{name}: {loan_count}번",
-                color="#FF4B4B",
-                ha="center",
+            fig.update_layout(
+                title_text=f"전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수",
+                title_x=0.25,
+                xaxis_title_text="과거 대출 횟수",
+                bargap=0.05,
+                # bargroupgap=0.1,
             )
+            st.plotly_chart(figure_or_data=fig)
 
-            # X축 레이블 설정
-            ax.set_xlabel("과거 대출 횟수", color="white")
-
-            # Y축 레이블 숨기기
-            ax.set_ylabel("")
-            ax.get_yaxis().set_visible(False)  # Y축 눈금 숨기기
-
-            st.pyplot(fig)
-
-            # 대출 상환 비율 차트
+            # Plotly Chart 2. 대출 상환 비율 차트
             st.markdown(
                 "<p class='font-size-sub-subheader'>" "💸 대출 상환 비율" "</p>",
                 unsafe_allow_html=True,
             )
 
-            fig, ax = plt.subplots(figsize=(8, 4))
-            create_style(ax)
-            ax.set_title(
-                f"전체 고객 대출 상환 비율 분포 중 {name}님의 비율", color="white"
+            fig = go.Figure()
+            fig.add_trace(
+                go.Histogram(
+                    x=total["Credit_Utilization_Ratio"],
+                    name="",
+                    hovertemplate="대출 상환 비율: %{x}, Count: %{y}",
+                    marker_color="#0064FF",
+                )
             )
-            ax.set_xlim(left=0.0, right=1.0)
-            ax.set_ylim(bottom=0, top=15000)
-
-            sns.histplot(
-                total["Credit_Utilization_Ratio"],
-                kde=False,
-                ax=ax,
-                color="#0064FF",  # '토스 블루' 색상으로 설정
+            fig.add_vline(
+                x=selected_user["대출 상환 비율"],
+                line_color="#FF4B4B",
+                line_dash="dash",
+                annotation_text=f"{name}: {selected_user['대출 상환 비율']:.2f}",
+                annotation_font_color="#FF4B4B",
             )
-
-            # 사용자 포인트 표시
-            ax.axvline(selected_user["대출 상환 비율"], color="red", linestyle="--")
-            ax.text(
-                selected_user["대출 상환 비율"],
-                ax.get_ylim()[1] * 0.9,
-                f'{name}: {selected_user["대출 상환 비율"]:.2f}',
-                color="#FF4B4B",
-                ha="center",
+            fig.update_xaxes(range=[0.0, 1.0])
+            fig.update_yaxes(range=[0, 10000])
+            fig.update_layout(
+                title_text=f"전체 고객 대출 상환 비율 분포 중 {name}님의 비율",
+                title_x=0.25,
+                xaxis_title_text="대출 상환 비율",
+                bargap=0.05,
             )
+            st.plotly_chart(figure_or_data=fig)
 
-            # X축 레이블 설정
-            ax.set_xlabel("대출 상환 비율", color="white")
-
-            # Y축 레이블 숨기기
-            ax.set_ylabel("")
-            ax.get_yaxis().set_visible(False)  # Y축 눈금 숨기기
-
-            st.pyplot(fig)
-
-            # 연 수입 대비 총 부채 비율 차트
+            # Plotly Chart 3. 연 수입 대비 총 부채 비율 차트
             st.markdown(
                 "<p class='font-size-sub-subheader'>"
                 "💸 연 수입 대비 총 부채 비율"
@@ -468,39 +455,31 @@ if predict_button:
                 unsafe_allow_html=True,
             )
 
-            fig, ax = plt.subplots(figsize=(8, 4))
-            create_style(ax)
-            ax.set_title(
-                f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율", color="white"
+            fig = go.Figure()
+            fig.add_trace(
+                go.Histogram(
+                    x=total["Debt_to_Income_Ratio"],
+                    name="",
+                    hovertemplate="대출 상환 비율: %{x}, Count: %{y}",
+                    marker_color="#0064FF",
+                )
             )
-            ax.set_xlim(left=0.0, right=5.0)
-            ax.set_ylim(bottom=0, top=8000)
-
-            sns.histplot(
-                total["Debt_to_Income_Ratio"],
-                kde=False,
-                ax=ax,
-                color="#0064FF",  # '토스 블루' 색상으로 설정
+            fig.add_vline(
+                x=selected_user["부채 상환 비율"],
+                line_color="#FF4B4B",
+                line_dash="dash",
+                annotation_text=f"{name}: {selected_user['부채 상환 비율']:.2f}",
+                annotation_font_color="#FF4B4B",
             )
-
-            # 사용자 포인트 표시
-            ax.axvline(selected_user["부채 상환 비율"], color="red", linestyle="--")
-            ax.text(
-                selected_user["부채 상환 비율"],
-                ax.get_ylim()[1] * 0.9,
-                f'{name}: {selected_user["부채 상환 비율"]:.2f}',
-                color="#FF4B4B",
-                ha="center",
+            fig.update_xaxes(range=[0.0, 5.0])
+            fig.update_yaxes(range=[0, 13000])
+            fig.update_layout(
+                title_text=f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율",
+                title_x=0.25,
+                xaxis_title_text="연 수입 대비 총 부채 비율",
+                bargap=0.05,
             )
-
-            # X축 레이블 설정
-            ax.set_xlabel("연 수입 대비 총 부채 비율", color="white")
-
-            # Y축 레이블 숨기기
-            ax.set_ylabel("")
-            ax.get_yaxis().set_visible(False)  # Y축 눈금 숨기기
-
-            st.pyplot(fig)
+            st.plotly_chart(figure_or_data=fig)
 
         else:
             st.subheader("과거 대출 이력")
