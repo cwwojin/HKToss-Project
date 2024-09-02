@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from PIL import Image
 from streamlit_cookies_controller import CookieController
 
 controller = CookieController()
@@ -67,6 +68,10 @@ st.markdown(
         border-radius: 5px;  /* 버튼 테두리 둥글기 */
     }
     a[data-testid='stSidebarNavLink'] {
+        display:none;
+    }
+
+    [data-testid='stSidebarHeader'] {
         display:none;
     }
 
@@ -168,6 +173,13 @@ if "predict_clicked" not in st.session_state:
 
 if "evaluate_clicked" not in st.session_state:
     st.session_state.evaluate_clicked = False
+
+st.sidebar.image(
+    image=Image.open(
+        path.join(path.dirname(__file__), "../assets/logo-toss-symbol-alpha.png")
+    ),
+    width=96,
+)
 
 st.sidebar.page_link(page="./app.py", label="Home", icon="🏠")
 
