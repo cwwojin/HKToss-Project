@@ -28,13 +28,12 @@ _C.MODEL_TYPE = (
 
 # Logistic Regression
 _C.LOGISTIC = CN()
-_C.LOGISTIC.C = [0.1, 1, 10]
-_C.LOGISTIC.penalty = ["l1", "l2"]
+_C.LOGISTIC.C = [1]
+_C.LOGISTIC.penalty = ["l2"]
 _C.LOGISTIC.solver = [
-    "sag",
     "saga",
 ]
-_C.LOGISTIC.max_iter = [100, 200]
+_C.LOGISTIC.max_iter = [200]
 _C.LOGISTIC.class_weight = [
     None,
     "balanced",
@@ -42,9 +41,9 @@ _C.LOGISTIC.class_weight = [
 
 # Random Forest
 _C.RANDOMFOREST = CN()
-_C.RANDOMFOREST.n_estimators = [100, 200]
+_C.RANDOMFOREST.n_estimators = [200]
 _C.RANDOMFOREST.max_depth = [10, 20]
-_C.RANDOMFOREST.min_samples_split = [2, 5, 10]
+_C.RANDOMFOREST.min_samples_split = [5]
 _C.RANDOMFOREST.max_features = ["sqrt", "log2"]
 _C.RANDOMFOREST.class_weight = [
     None,
@@ -54,9 +53,9 @@ _C.RANDOMFOREST.class_weight = [
 
 # XGBoost
 _C.XGBOOST = CN()
-_C.XGBOOST.n_estimators = [100, 200]
+_C.XGBOOST.n_estimators = [100]
 _C.XGBOOST.max_depth = [3, 6]
-_C.XGBOOST.learning_rate = [0.01, 0.1]
+_C.XGBOOST.learning_rate = [0.1]
 _C.XGBOOST.subsample = [0.8, 1.0]
 _C.XGBOOST.scale_pos_weight = [
     1,
@@ -67,25 +66,25 @@ _C.XGBOOST.scale_pos_weight = [
 
 # LightGBM
 _C.LIGHTGBM = CN()
-_C.LIGHTGBM.n_estimators = [100, 200]
+_C.LIGHTGBM.n_estimators = [100]
 _C.LIGHTGBM.max_depth = [10, 20]
-_C.LIGHTGBM.learning_rate = [0.01, 0.1]
+_C.LIGHTGBM.learning_rate = [0.1]
 _C.LIGHTGBM.num_leaves = [30, 60]
 _C.LIGHTGBM.is_unbalance = [False, True]  # 불균형 데이터 처리를 위한 옵션
 
 # CatBoost
 _C.CATBOOST = CN()
-_C.CATBOOST.iterations = [100, 200]
+_C.CATBOOST.iterations = [100]
 _C.CATBOOST.depth = [4, 6]
-_C.CATBOOST.learning_rate = [0.01, 0.1]
-_C.CATBOOST.l2_leaf_reg = [1, 3, 5]
+_C.CATBOOST.learning_rate = [0.1]
+_C.CATBOOST.l2_leaf_reg = [3]
 
 # MLP
 _C.MLP = CN()
-_C.MLP.hidden_layer_sizes = [(50,), (100,), (100, 50)]
-_C.MLP.activation = ["relu", "tanh"]
+_C.MLP.hidden_layer_sizes = [(100,)]
+_C.MLP.activation = ["relu"]
 _C.MLP.solver = ["adam"]
-_C.MLP.alpha = [0.0001, 0.001, 0.01]
+_C.MLP.alpha = [0.0001, 0.001]
 _C.MLP.learning_rate = ["adaptive"]
 
 # ======================================================== #
@@ -96,7 +95,7 @@ _C.MLP.learning_rate = ["adaptive"]
 _C.GRID_SEARCH = True
 _C.MULTIPROCESSING = False
 _C.PCA = CN()
-_C.PCA.N_COMPONENTS = [5, 10, 20, 50, 100]
+_C.PCA.N_COMPONENTS = [10, 20, 50]
 
 # Logger
 _C.LOGGER = CN()

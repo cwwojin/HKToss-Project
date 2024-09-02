@@ -245,6 +245,7 @@ class MLFlowTrainer:
                     "roc_auc_score": "roc_auc",
                 },
                 refit="f1_score",
+                verbose=1,
                 n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
             )
 
