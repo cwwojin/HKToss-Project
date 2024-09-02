@@ -31,37 +31,6 @@ DATA_PATH = ".cache"
 demo_path = path.join(DATA_PATH, "dataset_demo.csv")
 total_path = path.join(DATA_PATH, "dataset_total.csv")
 
-# if not path.isdir(DATA_PATH):
-#     os.makedirs(DATA_PATH, exist_ok=True)
-
-# if not path.isfile(demo_path):
-#     s3 = client(
-#         "s3",
-#         aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-#         aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-#         region_name=os.environ.get("AWS_REGION"),
-#     )
-#     s3.download_file(
-#         "hktoss-mlops",
-#         "datasets/dataset_demo.csv",
-#         demo_path,
-#     )
-#     s3.close()
-
-# if not path.isfile(total_path):
-#     s3 = client(
-#         "s3",
-#         aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-#         aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-#         region_name=os.environ.get("AWS_REGION"),
-#     )
-#     s3.download_file(
-#         "hktoss-mlops",
-#         "datasets/dataset_total.csv",
-#         total_path,
-#     )
-#     s3.close()
-
 # HTML을 사용하여 스타일 추가
 st.markdown(
     """
@@ -124,9 +93,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-# font_name = font_manager.FontProperties(fname=font_path).get_name()
-# rc('font', family=font_name)
 
 # OS 별 폰트 깨짐 처리
 if platform.system() == "Darwin":  # 맥
@@ -225,6 +191,7 @@ with st.sidebar.form(key="sidebar_form"):
         format_func=lambda x: loan_types[x],
         index=None,
         placeholder=loan_types[controller.get("selected_loan_type")],
+        disabled=True,
     )
 
     # 빈 공간 추가
@@ -236,6 +203,7 @@ with st.sidebar.form(key="sidebar_form"):
     selected_amount = st.text_input(
         "대출 금액 입력 (예: 1, 2 ,..., 50)",
         value=int(controller.get("selected_amount_int") / 10000000),
+        disabled=True,
     )
 
     st.markdown(
@@ -264,21 +232,6 @@ with st.sidebar.form(key="sidebar_form"):
 
 # 본 화면
 
-
-# # 시각화 함수 정의
-# def create_style(ax):
-#     fig.patch.set_facecolor("#0E1117")  # 전체 figure 배경 색상 설정
-#     ax.set_facecolor("#0E1117")  # 개별 subplot 배경 색상 설정
-#     ax.spines["top"].set_color("#31333F")
-#     ax.spines["right"].set_color("#31333F")
-#     ax.spines["bottom"].set_color("#31333F")
-#     ax.spines["left"].set_color("#31333F")
-#     ax.xaxis.label.set_color("white")
-#     ax.yaxis.label.set_color("white")
-#     ax.tick_params(axis="x", colors="white")
-#     ax.tick_params(axis="y", colors="white")
-
-
 # '확인하기' 버튼이 눌렸는지 확인
 if st.session_state.predict_clicked:
     name = controller.get("selected_user_name")
@@ -299,7 +252,6 @@ if st.session_state.predict_clicked:
             .transpose()
             .rename(columns=column_mapping_reverse)
         )
-        # selected_user_df["AMT_CREDIT"] = int(selected_amount_int / 1200)  # 환전 -> $
         selected_user_df["AMT_CREDIT"] = int(
             controller.get("selected_amount_int") / 1200
         )  # 환전 -> $
