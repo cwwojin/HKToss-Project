@@ -12,6 +12,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from streamlit_cookies_controller import CookieController
+
+controller = CookieController()
+try:
+    controller.remove("selected_user_name")
+    controller.remove("selected_loan_type")
+    controller.remove("selected_amount_int")
+except:
+    pass
+
 from boto3 import client
 from matplotlib import font_manager, rc
 from utils import APIHelper
@@ -58,7 +68,6 @@ if not path.isfile(total_path):
     )
     s3.close()
 
-
 # HTML을 사용하여 스타일 추가
 st.markdown(
     """
@@ -94,6 +103,9 @@ st.markdown(
         border: 2px solid white !important;  /* 버튼 테두리 색상 */
         border-radius: 5px;  /* 버튼 테두리 둥글기 */
     }
+    a[data-testid='stSidebarNavLink'] {
+        display:none;
+    }
 
     </style>
     """,
@@ -108,6 +120,10 @@ st.markdown(
     .font-size-sub-subheader {
         font-size:20px !important;
         font-weight: bold !important; /* 글씨체를 굵게 설정 */
+    }
+
+    .font-size-sub-write {
+        font-size:14px !important;
     }
 
     </style>
@@ -145,7 +161,6 @@ def load_total_data():
 # 데이터 로드
 demo = load_demo_data()
 total = load_total_data()
-
 
 # 열 이름 매핑
 column_mapping = {
@@ -187,7 +202,13 @@ loan_types = {
     "Microloan": "소액/비상금대출",
 }
 
+# 버튼 상태 초기화
+st.session_state.predict_clicked = False
+
+st.sidebar.page_link(page="./app.py", label="Home", icon="🏠")
+
 with st.sidebar.form(key="sidebar_form"):
+
     name = st.selectbox("이름을 선택하세요", demo["이름"].unique())
 
     # 빈 공간 추가
@@ -204,69 +225,68 @@ with st.sidebar.form(key="sidebar_form"):
     st.write(" ")
     st.write(" ")
 
-    # # 옵션 리스트를 문자열 형식으로 생성
-    # options = [f"₩{x:,}" for x in range(1_000_000, 50_000_000, 1_000_000)]
-
-    # # select_slider를 사용하여 사용자 정의 슬라이더 구현
-    # credit_min = st.select_slider(
-    #     "대출 금액 선택 (최대값: ₩50,000,000은 선택 불가)",
-    #     options=options,  # 포맷된 옵션 사용
-    #     value="₩1,000,000",  # 기본값 설정
-    # )
-
-    # # # 선택된 금액 출력
-    # # st.write(f"선택한 대출 금액: {credit_min}")
-
-    # # '확인하기' 버튼을 추가하여 연체 예측 결과를 확인
-    # predict_button = st.form_submit_button("확인하기")
-
     # text_input을 사용하여 대출 금액 직접 입력
+
     selected_amount = st.text_input(
-        "대출 금액 입력 (예: 1000000)", value="1000000"  # 기본값 설정
+        "대출 금액 입력 (예: 1, 2 ,..., 50)", value="1"  # 기본값 설정
     )
 
+    st.markdown(
+        "<p class='font-size-sub-write'>" "[단위: 천만원]" "</p>",
+        unsafe_allow_html=True,
+    )
+
+    st.write()
+
     try:
-        selected_amount_int = int(selected_amount)
-        if not (1_000_000 <= selected_amount_int <= 50_000_000):
+        selected_amount_int = 10000000 * int(selected_amount)
+        if not (10_000_000 <= selected_amount_int <= 500_000_000):
             st.write(
-                "대출 금액이 유효한 범위 내에 있지 않습니다. 1,000,000원에서 50,000,000원 사이로 입력하세요."
+                "대출 금액이 유효한 범위 내에 있지 않습니다. 1천만원에서 50천만원 사이로 입력하세요."
             )
     except ValueError:
         st.write("유효한 숫자를 입력하세요.")
 
-    # '확인하기' 버튼을 추가하여 연체 예측 결과를 확인
+    # '확인하기' 버튼 클릭 상태를 세션 상태에 저장
     predict_button = st.form_submit_button("확인하기")
+    if predict_button:
+        st.session_state.predict_clicked = True
+
+        # Set Cookie - Predict button submit
+        controller.set("selected_amount_int", selected_amount_int)
+        controller.set("selected_loan_type", selected_loan_type)
+        controller.set("selected_user_name", name)
 
 # 본 화면
 
 
-# 시각화 함수 정의
-def create_style(ax):
-    fig.patch.set_facecolor("#0E1117")  # 전체 figure 배경 색상 설정
-    ax.set_facecolor("#0E1117")  # 개별 subplot 배경 색상 설정
-    ax.spines["top"].set_color("#31333F")
-    ax.spines["right"].set_color("#31333F")
-    ax.spines["bottom"].set_color("#31333F")
-    ax.spines["left"].set_color("#31333F")
-    ax.xaxis.label.set_color("white")
-    ax.yaxis.label.set_color("white")
-    ax.tick_params(axis="x", colors="white")
-    ax.tick_params(axis="y", colors="white")
+# # 시각화 함수 정의
+# def create_style(ax):
+#     fig.patch.set_facecolor("#0E1117")  # 전체 figure 배경 색상 설정
+#     ax.set_facecolor("#0E1117")  # 개별 subplot 배경 색상 설정
+#     ax.spines["top"].set_color("#31333F")
+#     ax.spines["right"].set_color("#31333F")
+#     ax.spines["bottom"].set_color("#31333F")
+#     ax.spines["left"].set_color("#31333F")
+#     ax.xaxis.label.set_color("white")
+#     ax.yaxis.label.set_color("white")
+#     ax.tick_params(axis="x", colors="white")
+#     ax.tick_params(axis="y", colors="white")
 
 
 if "show_more" not in st.session_state:
     st.session_state.show_more = False
 
-
 # 조건을 설정한 후 확인하기를 눌러주세요 문구 추가
-if not predict_button:
+if not st.session_state.predict_clicked:
     st.markdown(
-        "<p style='text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 20px;'>좌측 사이드바에서 조건을 설정한 후 확인하기를 눌러주세요</p>",
+        "<p style='text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 20px;'>        좌측 사이드바에서 조건을 설정한 후 확인하기를 눌러주세요</p>",
         unsafe_allow_html=True,
     )
 
-if predict_button:
-    st.title(f"{name}님의 연체 예측 결과")
+# '확인하기' 버튼이 눌렸는지 확인
+if st.session_state.predict_clicked:
+    st.title(f"{name}님의 대출 가능성 분석")
 
     selected_user = demo[demo["이름"] == name]
 
@@ -304,186 +324,185 @@ if predict_button:
         )
         st.markdown(f"**🏢 재직 여부:** {'Y' if selected_user['재직 여부'] else 'N'}")
 
-        # 점선 추가
-        st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
+        # # 점선 추가
+        # st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
-        st.subheader("개인 대출 정보")
+        # st.subheader("개인 대출 정보")
 
-        # 연수입
-        user_income = selected_user["연간 소득"]
-        income_percentile = 100 - (
-            (total["AMT_INCOME_TOTAL"] < user_income).mean() * 100
-        )
+        # # 연수입
+        # user_income = selected_user["연간 소득"]
+        # income_percentile = 100 - (
+        #     (total["AMT_INCOME_TOTAL"] < user_income).mean() * 100
+        # )
 
-        st.markdown(
-            "<p class='font-size-sub-subheader'>💶 나의 연수입</p>",
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f"<p style='font-size: 16px;'>➔  내 연수입은 상위 <span style='color: #30e830; font-weight: bold;'>{income_percentile:.1f}%</span>에요.</p>",
-            unsafe_allow_html=True,
-        )
+        # st.markdown(
+        #     "<p class='font-size-sub-subheader'>💶 나의 연수입</p>",
+        #     unsafe_allow_html=True,
+        # )
+        # st.markdown(
+        #     f"<p style='font-size: 16px;'>➔  내 연수입은 상위 <span style='color: #30e830; font-weight: bold;'>{income_percentile:.1f}%</span>에요.</p>",
+        #     unsafe_allow_html=True,
+        # )
 
-        # 부양 부담 지수 (Dependents_Index)
-        dependents_index = selected_user.get("Dependents_Index", "정보 없음")
+        # # 부양 부담 지수 (Dependents_Index)
+        # dependents_index = selected_user.get("Dependents_Index", "정보 없음")
 
-        st.markdown(
-            "<p class='font-size-sub-subheader'>"
-            f"👶 부양 부담 지수: <span style='color: #f6f6c5;'>{dependents_index}</span>"
-            "</p>",
-            unsafe_allow_html=True,
-        )
-        st.write(
-            "➔  자녀에 대한 부양 부담이 가족 내에서 얼마나 큰 비중을 차지하는지를 나타내요."
-        )
+        # st.markdown(
+        #     "<p class='font-size-sub-subheader'>"
+        #     f"👶 부양 부담 지수: <span style='color: #f6f6c5;'>{dependents_index}</span>"
+        #     "</p>",
+        #     unsafe_allow_html=True,
+        # )
+        # st.write(
+        #     "➔  자녀에 대한 부양 부담이 가족 내에서 얼마나 큰 비중을 차지하는지를 나타내요."
+        # )
 
-        # 소득 대비 부양 부담 지수 (Income_to_Dependents_Ratio)
-        income_to_dependents_ratio = selected_user.get(
-            "Income_to_Dependents_Ratio", "정보 없음"
-        )
+        # # 소득 대비 부양 부담 지수 (Income_to_Dependents_Ratio)
+        # income_to_dependents_ratio = selected_user.get(
+        #     "Income_to_Dependents_Ratio", "정보 없음"
+        # )
 
-        st.markdown(
-            "<p class='font-size-sub-subheader'>"
-            f"🙋‍♂️🙋‍♀️ 소득 대비 부양 부담 지수: <span style='color: #f6f6c5;'>{income_to_dependents_ratio:.0f}</span>"
-            "</p>",
-            unsafe_allow_html=True,
-        )
-        st.write(
-            "➔  개인의 소득이 자녀 부양에 얼마나 적절하게 분배될 수 있는지를 나타내요."
-        )
-        # 점선 추가
-        st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
+        # st.markdown(
+        #     "<p class='font-size-sub-subheader'>"
+        #     f"🙋‍♂️🙋‍♀️ 소득 대비 부양 부담 지수: <span style='color: #f6f6c5;'>{income_to_dependents_ratio:.0f}</span>"
+        #     "</p>",
+        #     unsafe_allow_html=True,
+        # )
+        # st.write(
+        #     "➔  개인의 소득이 자녀 부양에 얼마나 적절하게 분배될 수 있는지를 나타내요."
+        # )
+        # # 점선 추가
+        # st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
-        loan_count = int(selected_user["과거 대출 횟수"])  # 정수형으로 변환
+        # loan_count = int(selected_user["과거 대출 횟수"])  # 정수형으로 변환
 
-        if loan_count > 0:
-            st.subheader("과거 대출 이력")
+        # if loan_count > 0:
+        #     st.subheader("과거 대출 이력")
 
-            # 과거 대출 이력이 있는 경우 DSR 표현 추가
-            if loan_count > 0:
-                dsr = selected_user.get(
-                    "부채 상환 가능성 지수", None
-                )  # 'Debt_Repayment_Capability_Index' 컬럼 매핑된 이름 사용
-            if dsr is not None:
-                st.markdown(
-                    "<p class='font-size-sub-subheader'>" f"💼 DSR" "</p>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f"<p style='font-size: 16px;'><b>DSR이란?</b> '내 소득 중 빚 갚는 데 쓰는 돈의 비율'을 의미해요.</p>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f"<p style='font-size: 16px;'>➔  내가 버는 총 소득 중에서 <span style='color: #30e830; font-weight: bold;'>{dsr:.2f}%</span>를 대출 상환에 쓰고 있어요.</p>",
-                    unsafe_allow_html=True,
-                )
+        #     # 과거 대출 이력이 있는 경우 DSR 표현 추가
+        #     dsr = selected_user.get(
+        #         "부채 상환 가능성 지수", None
+        #     )  # 'Debt_Repayment_Capability_Index' 컬럼 매핑된 이름 사용
+        #     if dsr is not None:
+        #         st.markdown(
+        #             "<p class='font-size-sub-subheader'>" f"💼 DSR" "</p>",
+        #             unsafe_allow_html=True,
+        #         )
+        #         st.markdown(
+        #             f"<p style='font-size: 16px;'><b>DSR이란?</b> '내 소득 중 빚 갚는 데 쓰는 돈의 비율'을 의미해요.</p>",
+        #             unsafe_allow_html=True,
+        #         )
+        #         st.markdown(
+        #             f"<p style='font-size: 16px;'>➔  내가 버는 총 소득 중에서 <span style='color: #30e830; font-weight: bold;'>{dsr:.2f}%</span>를 대출 상환에 쓰고 있어요.</p>",
+        #             unsafe_allow_html=True,
+        #         )
 
-            # Plotly Chart 1. 대출 대비 연체 횟수
-            st.markdown(
-                "<p class='font-size-sub-subheader'>" f"💸 대출 횟수" "</p>",
-                unsafe_allow_html=True,
-            )
-            st.write(
-                f"(대출 대비 연체 횟수 비율: {selected_user['대출 대비 연체 횟수 비율']})"
-            )
+        #     # Plotly Chart 1. 대출 대비 연체 횟수
+        #     st.markdown(
+        #         "<p class='font-size-sub-subheader'>" f"💸 대출 횟수" "</p>",
+        #         unsafe_allow_html=True,
+        #     )
+        #     st.write(
+        #         f"(대출 대비 연체 횟수 비율: {selected_user['대출 대비 연체 횟수 비율']})"
+        #     )
 
-            fig = go.Figure()
-            fig.add_trace(
-                go.Histogram(
-                    x=total["LOAN_COUNT"],
-                    name="",
-                    hovertemplate="과거 대출 횟수: %{x}, Count: %{y}",
-                    xbins=dict(
-                        start=0, end=int(demo["과거 대출 횟수"].max()) + 1, size=1
-                    ),
-                    marker_color="#0064FF",
-                )
-            )
-            fig.add_vline(
-                x=loan_count,
-                line_color="#FF4B4B",
-                line_dash="dash",
-                annotation_text=f"{name}: {loan_count}번",
-                annotation_font_color="#FF4B4B",
-            )
-            fig.update_layout(
-                title_text=f"전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수",
-                title_x=0.25,
-                xaxis_title_text="과거 대출 횟수",
-                bargap=0.05,
-                # bargroupgap=0.1,
-            )
-            st.plotly_chart(figure_or_data=fig)
+        #     fig = go.Figure()
+        #     fig.add_trace(
+        #         go.Histogram(
+        #             x=total["LOAN_COUNT"],
+        #             name="",
+        #             hovertemplate="과거 대출 횟수: %{x}, Count: %{y}",
+        #             xbins=dict(
+        #                 start=0, end=int(demo["과거 대출 횟수"].max()) + 1, size=1
+        #             ),
+        #             marker_color="#0064FF",
+        #         )
+        #     )
+        #     fig.add_vline(
+        #         x=loan_count,
+        #         line_color="#FF4B4B",
+        #         line_dash="dash",
+        #         annotation_text=f"{name}: {loan_count}번",
+        #         annotation_font_color="#FF4B4B",
+        #     )
+        #     fig.update_layout(
+        #         title_text=f"전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수",
+        #         title_x=0.25,
+        #         xaxis_title_text="과거 대출 횟수",
+        #         bargap=0.05,
+        #         # bargroupgap=0.1,
+        #     )
+        #     st.plotly_chart(figure_or_data=fig)
 
-            # Plotly Chart 2. 대출 상환 비율 차트
-            st.markdown(
-                "<p class='font-size-sub-subheader'>" "💸 대출 상환 비율" "</p>",
-                unsafe_allow_html=True,
-            )
+        #     # Plotly Chart 2. 대출 상환 비율 차트
+        #     st.markdown(
+        #         "<p class='font-size-sub-subheader'>" "💸 대출 상환 비율" "</p>",
+        #         unsafe_allow_html=True,
+        #     )
 
-            fig = go.Figure()
-            fig.add_trace(
-                go.Histogram(
-                    x=total["Credit_Utilization_Ratio"],
-                    name="",
-                    hovertemplate="대출 상환 비율: %{x}, Count: %{y}",
-                    marker_color="#0064FF",
-                )
-            )
-            fig.add_vline(
-                x=selected_user["대출 상환 비율"],
-                line_color="#FF4B4B",
-                line_dash="dash",
-                annotation_text=f"{name}: {selected_user['대출 상환 비율']:.2f}",
-                annotation_font_color="#FF4B4B",
-            )
-            fig.update_xaxes(range=[0.0, 1.0])
-            fig.update_yaxes(range=[0, 10000])
-            fig.update_layout(
-                title_text=f"전체 고객 대출 상환 비율 분포 중 {name}님의 비율",
-                title_x=0.25,
-                xaxis_title_text="대출 상환 비율",
-                bargap=0.05,
-            )
-            st.plotly_chart(figure_or_data=fig)
+        #     fig = go.Figure()
+        #     fig.add_trace(
+        #         go.Histogram(
+        #             x=total["Credit_Utilization_Ratio"],
+        #             name="",
+        #             hovertemplate="대출 상환 비율: %{x}, Count: %{y}",
+        #             marker_color="#0064FF",
+        #         )
+        #     )
+        #     fig.add_vline(
+        #         x=selected_user["대출 상환 비율"],
+        #         line_color="#FF4B4B",
+        #         line_dash="dash",
+        #         annotation_text=f"{name}: {selected_user['대출 상환 비율']:.2f}",
+        #         annotation_font_color="#FF4B4B",
+        #     )
+        #     fig.update_xaxes(range=[0.0, 1.0])
+        #     fig.update_yaxes(range=[0, 10000])
+        #     fig.update_layout(
+        #         title_text=f"전체 고객 대출 상환 비율 분포 중 {name}님의 비율",
+        #         title_x=0.25,
+        #         xaxis_title_text="대출 상환 비율",
+        #         bargap=0.05,
+        #     )
+        #     st.plotly_chart(figure_or_data=fig)
 
-            # Plotly Chart 3. 연 수입 대비 총 부채 비율 차트
-            st.markdown(
-                "<p class='font-size-sub-subheader'>"
-                "💸 연 수입 대비 총 부채 비율"
-                "</p>",
-                unsafe_allow_html=True,
-            )
+        #     # Plotly Chart 3. 연 수입 대비 총 부채 비율 차트
+        #     st.markdown(
+        #         "<p class='font-size-sub-subheader'>"
+        #         "💸 연 수입 대비 총 부채 비율"
+        #         "</p>",
+        #         unsafe_allow_html=True,
+        #     )
 
-            fig = go.Figure()
-            fig.add_trace(
-                go.Histogram(
-                    x=total["Debt_to_Income_Ratio"],
-                    name="",
-                    hovertemplate="대출 상환 비율: %{x}, Count: %{y}",
-                    marker_color="#0064FF",
-                )
-            )
-            fig.add_vline(
-                x=selected_user["부채 상환 비율"],
-                line_color="#FF4B4B",
-                line_dash="dash",
-                annotation_text=f"{name}: {selected_user['부채 상환 비율']:.2f}",
-                annotation_font_color="#FF4B4B",
-            )
-            fig.update_xaxes(range=[0.0, 5.0])
-            fig.update_yaxes(range=[0, 13000])
-            fig.update_layout(
-                title_text=f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율",
-                title_x=0.25,
-                xaxis_title_text="연 수입 대비 총 부채 비율",
-                bargap=0.05,
-            )
-            st.plotly_chart(figure_or_data=fig)
+        #     fig = go.Figure()
+        #     fig.add_trace(
+        #         go.Histogram(
+        #             x=total["Debt_to_Income_Ratio"],
+        #             name="",
+        #             hovertemplate="대출 상환 비율: %{x}, Count: %{y}",
+        #             marker_color="#0064FF",
+        #         )
+        #     )
+        #     fig.add_vline(
+        #         x=selected_user["부채 상환 비율"],
+        #         line_color="#FF4B4B",
+        #         line_dash="dash",
+        #         annotation_text=f"{name}: {selected_user['부채 상환 비율']:.2f}",
+        #         annotation_font_color="#FF4B4B",
+        #     )
+        #     fig.update_xaxes(range=[0.0, 5.0])
+        #     fig.update_yaxes(range=[0, 13000])
+        #     fig.update_layout(
+        #         title_text=f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율",
+        #         title_x=0.25,
+        #         xaxis_title_text="연 수입 대비 총 부채 비율",
+        #         bargap=0.05,
+        #     )
+        #     st.plotly_chart(figure_or_data=fig)
 
-        else:
-            st.subheader("과거 대출 이력")
-            st.write("**조회할 대출 이력이 없습니다.**")
+        # else:
+        #     st.subheader("과거 대출 이력")
+        #     st.write("**조회할 대출 이력이 없습니다.**")
 
         # 점선 추가
         st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
@@ -497,53 +516,28 @@ if predict_button:
             f"💵 **선택한 대출 금액:** ₩{selected_amount_int:,}원"
         )  # 선택한 대출 금액 표시
 
-        # TEMP : API Call check
-        body = (
-            pd.DataFrame(selected_user)
-            .transpose()
-            .rename(columns=column_mapping_reverse)
+        # # TEMP : API Call check
+        # selected_user_df = (
+        #     pd.DataFrame(selected_user)
+        #     .transpose()
+        #     .rename(columns=column_mapping_reverse)
+        # )
+        # selected_user_df["AMT_CREDIT"] = int(selected_amount_int / 1200)  # 환전 -> $
+        # eval_result = api.run_inference(
+        #     df=selected_user_df,
+        # ).iloc[0]
+        # eval_loan_proba = eval_result["pred_probs_loan"]
+        # eval_loan_approval = eval_result["preds_loan"]
+        # st.markdown(
+        #     f"""**{name}** 님의 대출 승인 확률 : **{(eval_loan_proba*100):.2f}%**"""
+        # )
+        # st.markdown(
+        #     f"""**{name}** 님의 대출은 **{'승인' if eval_loan_approval else '미승인'}** 될 가능성이 높아요."""
+        # )
+
+        # st.write(" ")
+        st.write(" ")
+
+        st.page_link(
+            "pages/1_application_of_results.py", label="💰 대출 가능성 분석 💰"
         )
-        eval_result = api.run_inference(
-            df=body,
-        )
-        st.dataframe(eval_result)
-
-        # 대출 가능성 평가 버튼
-        evaluate_button = st.button("대출 가능성 평가")
-
-        if evaluate_button:
-            st.write("**대출 가능성 평가**")
-
-            # 재직 기간 및 연수입 기준
-            today = datetime.today()
-            employment_duration_days = -selected_user["재직 여부"]
-            employment_start_date = today - pd.to_timedelta(
-                employment_duration_days, unit="D"
-            )
-            employment_duration_years = (today - employment_start_date).days / 365.25
-
-            annual_income = selected_user["연간 소득"]
-
-            # 대출 가능성 기준 설정
-            min_employment_duration_years = 1  # 1년 이상
-            min_annual_income = 20_000_000  # 연 2천만원 이상
-
-            feedback = []
-
-            if employment_duration_years < min_employment_duration_years:
-                feedback.append("재직 기간이 부족합니다. 재직 기간을 늘려보세요.")
-            else:
-                feedback.append("재직 기간은 충분합니다.")
-
-            if annual_income < min_annual_income:
-                feedback.append("연수입이 부족합니다. 연수입을 늘려보세요.")
-            else:
-                feedback.append("연수입은 충분합니다.")
-
-            if not feedback:  # feedback 리스트가 비어있다면
-                feedback.append(
-                    "대출 가능성이 높습니다. 추가적인 조건이 필요한 경우, 금융 기관에 문의하세요."
-                )
-
-            for line in feedback:
-                st.write(f" - {line}")

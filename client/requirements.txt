@@ -4,3 +4,4 @@ matplotlib==3.7.5
 python-dotenv
 boto3
 plotly==5.24.0
+streamlit-cookies-controller==0.0.4

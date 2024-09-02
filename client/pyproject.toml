@@ -16,6 +16,7 @@ python-dotenv = "^1.0.1"
 boto3 = "^1.35.10"
 requests = "^2.32.3"
 plotly = "^5.24.0"
+streamlit-cookies-controller = "0.0.4"
 
 
 [build-system]
