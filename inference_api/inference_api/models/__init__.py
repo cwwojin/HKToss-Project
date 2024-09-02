@@ -1,1 +1,1 @@
-from .dto import InferenceDto
+from .dto import InferenceDto, InferenceResult
