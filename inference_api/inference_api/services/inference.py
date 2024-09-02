@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from sqlalchemy import Engine, text
 
 from inference_api.config import config
-from inference_api.models import InferenceDto
+from inference_api.models import InferenceDto, InferenceResult
 
 
 class InferenceService:
@@ -111,7 +111,9 @@ class InferenceService:
 
         return X, y
 
-    def get_inference_results(self, inferenceDto: InferenceDto, model_name: str = None):
+    def get_inference_results(
+        self, inferenceDto: InferenceDto, model_name: str = None
+    ) -> List[InferenceResult]:
         """run inference on either specified model or the best model"""
 
         # Preprocess
@@ -130,12 +132,12 @@ class InferenceService:
             pred_probs = self.model.predict_proba(X)
             preds = np.argmax(pred_probs, axis=1)
 
-        result = (
+        result: List[InferenceResult] = (
             DataFrame(
                 {
                     "NAME": input["NAME"],
-                    "pred_probs": Series(pred_probs[:, 1], index=y.index),
-                    "preds": Series(preds, index=y.index),
+                    "pred_probs": Series(pred_probs[:, 1], index=y.index).astype(float),
+                    "preds": Series(preds, index=y.index).astype(int),
                     "gt": y,
                 }
             )
