@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def _fetch_data():
     connection_string = os.environ.get("MONGODB_URL")
 
@@ -56,4 +57,3 @@ def _fetch_data():
 
     finally:
         client.close()
-

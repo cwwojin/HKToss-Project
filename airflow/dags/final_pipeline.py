@@ -14,17 +14,19 @@ from data.combine_data import _combine_batches
 samplers = ["over_smote", "over_random", "under_random", None]
 models = ["lightgbm", "catboost", "xgboost", "randomforest", "logistic", "mlp"]
 
+
 # 모델과 샘플러의 모든 조합 생성
 def get_csv_file_path(**kwargs):
     # 현재 날짜를 기반으로 요일을 구함 (일요일=0, ..., 토요일=6)
     day_of_week = datetime.now().weekday()
     file_path = f"/opt/airflow/dags/data/.tmp/dataset_train_sub_split_{(day_of_week + 1) % 7}.csv"
-    
+
     # 파일 존재 여부 확인
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
-    
+
     return file_path
+
 
 default_args = {"start_date": datetime(2024, 1, 1)}
 
@@ -58,8 +60,7 @@ with DAG(
     )
 
     combine_data = PythonOperator(
-        task_id="combine_data", 
-        python_callable=_combine_batches
+        task_id="combine_data", python_callable=_combine_batches
     )
 
     load_dataset_task = PythonOperator(
@@ -68,7 +69,13 @@ with DAG(
     )
 
     # 작업 순서 설정
-    get_csv_file_path_task >> import_data_task >> fetch_data >> combine_data >> load_dataset_task
+    (
+        get_csv_file_path_task
+        >> import_data_task
+        >> fetch_data
+        >> combine_data
+        >> load_dataset_task
+    )
 
     # 모델과 샘플러 조합에 대한 작업 그룹 생성 및 설정
     previous_task = load_dataset_task
@@ -78,7 +85,7 @@ with DAG(
             for i in range(0, len(samplers), 2):  # 2개씩 묶어 처리
                 tasks = []
                 with TaskGroup(group_id=f"parallel_{model}_{i}") as parallel_group:
-                    for sampler in samplers[i:i+2]:
+                    for sampler in samplers[i : i + 2]:
                         sampler_str = sampler if sampler is not None else "none"
 
                         run_experiment_task = PythonOperator(
@@ -87,7 +94,7 @@ with DAG(
                             op_kwargs={
                                 "model": model,
                                 "sampler": sampler,
-                            }
+                            },
                         )
 
                         tasks.append(run_experiment_task)
@@ -96,7 +103,9 @@ with DAG(
                     for task in tasks:
                         previous_task >> task
 
-                previous_task = tasks[-1]  # 마지막 병렬 작업을 다음의 이전 작업으로 설정
+                previous_task = tasks[
+                    -1
+                ]  # 마지막 병렬 작업을 다음의 이전 작업으로 설정
 
         # 모델 그룹이 순차적으로 실행되도록 설정
         load_dataset_task >> model_group

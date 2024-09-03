@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def _import_data(**kwargs):
     connection_string = os.environ.get("MONGODB_URL")
 
@@ -30,14 +31,17 @@ def _import_data(**kwargs):
 
         # 이미 존재하는 unique_key를 가져오기
         existing_keys = set(
-            doc[unique_key] for doc in collection.find({unique_key: {"$in": df[unique_key].tolist()}}, {unique_key: 1})
+            doc[unique_key]
+            for doc in collection.find(
+                {unique_key: {"$in": df[unique_key].tolist()}}, {unique_key: 1}
+            )
         )
 
         # MongoDB에 없는 unique_key를 가진 문서만 선택
         new_documents = df[~df[unique_key].isin(existing_keys)]
 
         # DataFrame을 딕셔너리 목록으로 변환
-        documents_to_insert = new_documents.to_dict(orient='records')
+        documents_to_insert = new_documents.to_dict(orient="records")
 
         if documents_to_insert:
             # Bulk insert 문서들

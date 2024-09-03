@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from datetime import datetime
 
+
 def _combine_batches():
     cache_dir = "/opt/airflow/.cache"
     combined_df = pd.DataFrame()
@@ -21,7 +22,9 @@ def _combine_batches():
     current_weekday = datetime.now().strftime("%A")
 
     # 통합된 데이터프레임을 하나의 파일로 저장
-    combined_file_path = os.path.join(cache_dir, f"train_data_cache_{current_weekday}.pkl")
+    combined_file_path = os.path.join(
+        cache_dir, f"train_data_cache_{current_weekday}.pkl"
+    )
     combined_df.to_pickle(combined_file_path)
 
     print(f"All batches combined and saved to {combined_file_path}")
@@ -30,4 +33,3 @@ def _combine_batches():
     for batch_file in batch_files:
         os.remove(batch_file)
         print(f"Removed batch file: {batch_file}")
-
