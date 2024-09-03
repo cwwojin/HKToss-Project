@@ -57,5 +57,3 @@ def _fetch_data():
     finally:
         client.close()
 
-if __name__ == "__main__":
-    _fetch_data()

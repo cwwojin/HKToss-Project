@@ -51,9 +51,3 @@ def _import_data(**kwargs):
 
     finally:
         client.close()
-
-# if __name__ == "__main__":
-#     # Run the import function
-#     csv_file_path = "../.tmp/dataset/dataset_train_sub_split_0.csv"
-#     unique_key = "SK_ID_CURR"
-#     _import_data(csv_file_path, unique_key)

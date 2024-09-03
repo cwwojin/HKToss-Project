@@ -18,7 +18,7 @@ models = ["lightgbm", "catboost", "xgboost", "randomforest", "logistic", "mlp"]
 def get_csv_file_path(**kwargs):
     # 현재 날짜를 기반으로 요일을 구함 (일요일=0, ..., 토요일=6)
     day_of_week = datetime.now().weekday()
-    file_path = f"/opt/airflow/dags/data/newdata/dataset_train_sub_split_{(day_of_week + 1) % 7}.csv"
+    file_path = f"/opt/airflow/dags/data/.tmp/dataset_train_sub_split_{(day_of_week + 1) % 7}.csv"
     
     # 파일 존재 여부 확인
     if not os.path.exists(file_path):
