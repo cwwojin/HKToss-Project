@@ -8,6 +8,7 @@ RUN apt-get update && \
     apt-get install libgomp1
 
 # Copy files
+COPY ./package /usr/src/package
 COPY .env .
 COPY ./inference_api .
 

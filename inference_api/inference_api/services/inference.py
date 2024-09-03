@@ -149,7 +149,7 @@ class InferenceService:
                 self.load_model_by_name(model_name)
 
             pred_probs = self.cached_model.predict_proba(X)
-            preds = np.argmax(pred_probs, axis=1)
+            preds = self.cached_model.predict(X)
         else:
             now = datetime.now()
             if (
@@ -160,7 +160,7 @@ class InferenceService:
                 self.load_best_model()
 
             pred_probs = self.model.predict_proba(X)
-            preds = np.argmax(pred_probs, axis=1)
+            preds = self.model.predict(X)
 
         result: List[InferenceResult] = (
             DataFrame(
