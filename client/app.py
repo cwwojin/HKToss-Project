@@ -338,6 +338,11 @@ if st.session_state.predict_clicked:
             f"💵 **선택한 대출 금액:** ₩{selected_amount_int:,}원"
         )  # 선택한 대출 금액 표시
 
+        # 점선 추가
+        st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
+
+        # 빈공간 추가
+        st.write(" ")
         st.write(" ")
 
         st.page_link("pages/analysis.py", label="💰 대출 가능성 분석 💰")
