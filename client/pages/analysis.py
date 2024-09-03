@@ -67,6 +67,7 @@ st.markdown(
         border: 2px solid white !important;  /* 버튼 테두리 색상 */
         border-radius: 5px;  /* 버튼 테두리 둥글기 */
     }
+
     a[data-testid='stSidebarNavLink'] {
         display:none;
     }
@@ -75,6 +76,12 @@ st.markdown(
         display:none;
     }
 
+    /* 페이지 링크 스타일 설정 */
+    a[data-testid='stPageLink-NavLink'] {
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;  /* 연한 흰색 테두리 설정 */
+    border-radius: 5px;  /* 테두리 둥글기 설정 */
+    }
+    
     </style>
     """,
     unsafe_allow_html=True,
@@ -176,10 +183,12 @@ if "evaluate_clicked" not in st.session_state:
 
 st.sidebar.image(
     image=Image.open(
-        path.join(path.dirname(__file__), "../assets/logo-toss-symbol-alpha.png")
+        path.join(path.dirname(__file__), "../assets/TossBank_Logo_Primary.png")
     ),
-    width=96,
+    width=400,
+    use_column_width=True,
 )
+
 
 st.sidebar.page_link(page="./app.py", label="Home", icon="🏠")
 
@@ -273,7 +282,7 @@ if st.session_state.predict_clicked:
             if selected_loan_type == "Revolving loans"
             else "Cash loans"
         )
-        st.dataframe(selected_user_df)
+        # st.dataframe(selected_user_df)
         eval_result = api.run_inference(
             df=selected_user_df,
         ).iloc[0]
@@ -283,7 +292,7 @@ if st.session_state.predict_clicked:
         st.write("")
 
         st.markdown(
-            f"<p style='font-size: 23px; font-weight: bold;'>{name}님의 대출 승인 확률 :  <span style='color: #80fdc3; font-weight: bold;'>{(eval_loan_proba*100):.2f}%</p>",
+            f"<p style='font-size: 28px; font-weight: bold;'>대출 승인 확률 :  <span style='color: #80fdc3; font-weight: bold;'>{(eval_loan_proba*100):.2f}%</p>",
             unsafe_allow_html=True,
         )
 
@@ -293,7 +302,7 @@ if st.session_state.predict_clicked:
 
         # st.markdown을 사용하여 HTML 마크업을 출력합니다.
         st.markdown(
-            f"<p style='font-size: 23px; font-weight: bold;'>{name}님의 대출은 <span style='color: {approval_color}; font-weight: bold;'> {approval_text} </span> 될 가능성이 높아요.</p>",
+            f"<p style='font-size: 28px; font-weight: bold;'>신청하신 대출은 <span style='color: {approval_color}; font-weight: bold;'> {approval_text} </span> 될 가능성이 높아요.</p>",
             unsafe_allow_html=True,
         )
 
@@ -355,31 +364,21 @@ if st.session_state.predict_clicked:
         if loan_count > 0:
             st.subheader("과거 대출 이력")
 
-            # 과거 대출 이력이 있는 경우 DSR 표현 추가
-            dsr = selected_user.get(
-                "부채 상환 가능성 지수", None
-            )  # 'Debt_Repayment_Capability_Index' 컬럼 매핑된 이름 사용
-            if dsr is not None:
-                st.markdown(
-                    "<p class='font-size-sub-subheader'>" f"💼 DSR" "</p>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f"<p style='font-size: 16px;'><b>DSR이란?</b> '내 소득 중 빚 갚는 데 쓰는 돈의 비율'을 의미해요.</p>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f"<p style='font-size: 16px;'>➔  내가 버는 총 소득 중에서 <span style='color: #30e830; font-weight: bold;'>{dsr:.2f}%</span>를 대출 상환에 쓰고 있어요.</p>",
-                    unsafe_allow_html=True,
-                )
-
+            # 빈 공간 추가
+            st.write(" ")
+            st.write(" ")
             # Plotly Chart 1. 대출 대비 연체 횟수
             st.markdown(
-                "<p class='font-size-sub-subheader'>" f"💸 대출 횟수" "</p>",
+                f"""
+            <p class='font-size-sub-subheader'>
+                💸 대출 횟수 
+                <span style='color: rgba(255, 255, 255, 0.5); font-size: 0.8em;'>
+                    ({name}님의 과거 대출 횟수: 
+                    <span style='color: rgba(255, 75, 75, 0.7);'>{loan_count}번</span>)
+                </span>
+            </p>
+            """,
                 unsafe_allow_html=True,
-            )
-            st.write(
-                f"(대출 대비 연체 횟수 비율: {selected_user['대출 대비 연체 횟수 비율']})"
             )
 
             fig = go.Figure()
@@ -410,9 +409,20 @@ if st.session_state.predict_clicked:
             )
             st.plotly_chart(figure_or_data=fig)
 
+            # 빈 공간 추가
+            st.write(" ")
             # Plotly Chart 2. 대출 상환 비율 차트
             st.markdown(
-                "<p class='font-size-sub-subheader'>" "💸 대출 상환 비율" "</p>",
+                "<p class='font-size-sub-subheader'>" "💸 잔여 부채 비율" "</p>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"<p style='font-size: 16px;'><b>잔여 부채 비율이란?</b> 전체 대출금 중 부채가 얼마나 남았는지 보여주는 비율이에요.</p>",
+                unsafe_allow_html=True,
+            )
+            percent_of_CUR = selected_user["대출 상환 비율"] * 100
+            st.markdown(
+                f"<p style='font-size: 16px;'>➔  {name}님의 부채는 <span style='color: #30e830; font-weight: bold;'> 약 {percent_of_CUR:.0f}%</span>가 남았어요.</p>",
                 unsafe_allow_html=True,
             )
 
@@ -442,11 +452,46 @@ if st.session_state.predict_clicked:
             )
             st.plotly_chart(figure_or_data=fig)
 
+            # 빈 공간 추가
+            st.write(" ")
+            # DSR
+            dsr = selected_user.get("부채 상환 가능성 지수", None)
+            # 'Debt_Repayment_Capability_Index' 컬럼 매핑된 이름 사용
+
+            percent_of_DSR = 100 * dsr
+
+            if dsr is not None:
+                st.markdown(
+                    "<p class='font-size-sub-subheader'>" f"💼 DSR" "</p>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f"<p style='font-size: 16px;'><b>DSR이란?</b> 내 소득 중 빚 갚는 데 쓰는 돈의 비율이에요.</p>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f"<p style='font-size: 16px;'>➔  {name}님은 총 소득 중에서 <span style='color: #30e830; font-weight: bold;'>약 {percent_of_DSR:.0f}%</span>를 대출 상환에 쓰고 있어요.</p>",
+                    unsafe_allow_html=True,
+                )
+
+            # 빈 공간 추가
+            st.write(" ")
+            st.write(" ")  # 빈 공간 추가
+            st.write(" ")
+            st.write(" ")
             # Plotly Chart 3. 연 수입 대비 총 부채 비율 차트
             st.markdown(
                 "<p class='font-size-sub-subheader'>"
                 "💸 연 수입 대비 총 부채 비율"
                 "</p>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"<p style='font-size: 16px;'><b>연 수입 대비 총 부채 비율이란?</b> 1년 동안 버는 돈에 비해 얼마나 많은 부채를 가지고 있는지를 보여주는 비율이에요.</p>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"<p style='font-size: 16px;'>➔  {name}님의 부채는 연수입의 <span style='color: #30e830; font-weight: bold;'> 약 {selected_user['부채 상환 비율']:.2f}배</span>에요.</p>",
                 unsafe_allow_html=True,
             )
 
