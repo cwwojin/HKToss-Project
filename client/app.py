@@ -104,12 +104,19 @@ st.markdown(
         border: 2px solid white !important;  /* 버튼 테두리 색상 */
         border-radius: 5px;  /* 버튼 테두리 둥글기 */
     }
+    
     a[data-testid='stSidebarNavLink'] {
         display:none;
     }
 
     [data-testid='stSidebarHeader'] {
         display:none;
+    }
+
+    /* 페이지 링크 스타일 설정 */
+    a[data-testid='stPageLink-NavLink'] {
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;  /* 연한 흰색 테두리 설정 */
+    border-radius: 5px;  /* 테두리 둥글기 설정 */
     }
 
     </style>
@@ -209,9 +216,10 @@ st.session_state.predict_clicked = False
 
 st.sidebar.image(
     image=Image.open(
-        path.join(path.dirname(__file__), "assets/logo-toss-symbol-alpha.png")
+        path.join(path.dirname(__file__), "assets/TossBank_Logo_Primary.png")
     ),
-    width=96,
+    width=400,
+    use_column_width=True,
 )
 
 st.sidebar.page_link(page="./app.py", label="Home", icon="🏠")

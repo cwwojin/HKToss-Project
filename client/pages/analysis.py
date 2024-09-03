@@ -67,6 +67,7 @@ st.markdown(
         border: 2px solid white !important;  /* 버튼 테두리 색상 */
         border-radius: 5px;  /* 버튼 테두리 둥글기 */
     }
+
     a[data-testid='stSidebarNavLink'] {
         display:none;
     }
@@ -75,6 +76,12 @@ st.markdown(
         display:none;
     }
 
+    /* 페이지 링크 스타일 설정 */
+    a[data-testid='stPageLink-NavLink'] {
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;  /* 연한 흰색 테두리 설정 */
+    border-radius: 5px;  /* 테두리 둥글기 설정 */
+    }
+    
     </style>
     """,
     unsafe_allow_html=True,
@@ -176,10 +183,12 @@ if "evaluate_clicked" not in st.session_state:
 
 st.sidebar.image(
     image=Image.open(
-        path.join(path.dirname(__file__), "../assets/logo-toss-symbol-alpha.png")
+        path.join(path.dirname(__file__), "../assets/TossBank_Logo_Primary.png")
     ),
-    width=96,
+    width=400,
+    use_column_width=True,
 )
+
 
 st.sidebar.page_link(page="./app.py", label="Home", icon="🏠")
 
@@ -273,7 +282,7 @@ if st.session_state.predict_clicked:
             if selected_loan_type == "Revolving loans"
             else "Cash loans"
         )
-        st.dataframe(selected_user_df)
+        # st.dataframe(selected_user_df)
         eval_result = api.run_inference(
             df=selected_user_df,
         ).iloc[0]
@@ -283,7 +292,7 @@ if st.session_state.predict_clicked:
         st.write("")
 
         st.markdown(
-            f"<p style='font-size: 23px; font-weight: bold;'>{name}님의 대출 승인 확률 :  <span style='color: #80fdc3; font-weight: bold;'>{(eval_loan_proba*100):.2f}%</p>",
+            f"<p style='font-size: 28px; font-weight: bold;'>{name}님의 대출 승인 확률 :  <span style='color: #80fdc3; font-weight: bold;'>{(eval_loan_proba*100):.2f}%</p>",
             unsafe_allow_html=True,
         )
 
@@ -293,7 +302,7 @@ if st.session_state.predict_clicked:
 
         # st.markdown을 사용하여 HTML 마크업을 출력합니다.
         st.markdown(
-            f"<p style='font-size: 23px; font-weight: bold;'>{name}님의 대출은 <span style='color: {approval_color}; font-weight: bold;'> {approval_text} </span> 될 가능성이 높아요.</p>",
+            f"<p style='font-size: 28px; font-weight: bold;'>{name}님의 대출은 <span style='color: {approval_color}; font-weight: bold;'> {approval_text} </span> 될 가능성이 높아요.</p>",
             unsafe_allow_html=True,
         )
 
