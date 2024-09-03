@@ -17,11 +17,31 @@ from imblearn.over_sampling import SMOTENC, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 from mlflow.client import MlflowClient
 from pandas import DataFrame
-from sklearn.metrics import f1_score, roc_auc_score
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.metrics import classification_report, f1_score, make_scorer, roc_auc_score
+from sklearn.model_selection import (
+    GridSearchCV,
+    TunedThresholdClassifierCV,
+    train_test_split,
+)
 from yacs.config import CfgNode as CN
 
 MODEL_IMPROVEMENT_THR = 1e-4
+SAMPLER_TARGETS = {
+    0: 150000,
+    1: 50000,
+}
+
+
+def positive_f1(y_true, y_pred):
+    return classification_report(y_true, y_pred, target_names=[0, 1], output_dict=True)[
+        1
+    ]["f1-score"]
+
+
+def positive_recall(y_true, y_pred):
+    return classification_report(y_true, y_pred, target_names=[0, 1], output_dict=True)[
+        1
+    ]["recall"]
 
 
 class MLFlowTrainer:
@@ -108,6 +128,29 @@ class MLFlowTrainer:
                 k_neighbors=5,
             )
             df_x, df_y = data_sampler.fit_resample(df_x, df_y)
+        elif sampler == "composite":
+            # Oversampling
+            over_sampler = SMOTENC(
+                categorical_features=cat_columns,
+                random_state=self.config.DATASET.RANDOM_STATE,
+                sampling_strategy={
+                    0: df_y.value_counts()[0],
+                    1: SAMPLER_TARGETS[1],
+                },
+            )
+            df_x, df_y = over_sampler.fit_resample(df_x, df_y)
+
+            # Undersampling
+            under_sampler = RandomUnderSampler(
+                random_state=self.config.DATASET.RANDOM_STATE,
+                replacement=False,
+                sampling_strategy={
+                    0: SAMPLER_TARGETS[0],
+                    1: df_y.value_counts()[1],
+                },
+            )
+            df_x, df_y = under_sampler.fit_resample(df_x, df_y)
+
         # Don't use split if using grid-search
         if grid_search:
             return df_x, df_y, column_types
@@ -201,6 +244,16 @@ class MLFlowTrainer:
         # prepare dataset
         X, y, column_types = self.prepare_data(df=dataframe, grid_search=True)
 
+        # # if TUNE_THRESHOLD : keep 10%
+        # if self.config.TUNE_THRESHOLD:
+        #     X, X_thr, y, y_thr = train_test_split(
+        #         X,
+        #         y,
+        #         test_size=0.1,
+        #         random_state=self.config.DATASET.RANDOM_STATE,
+        #         stratify=y,
+        #     )
+
         # load model
         if not self.model:
             self.prepare_model(column_types)
@@ -228,7 +281,9 @@ class MLFlowTrainer:
             if hasattr(self.model, "pca"):
                 if self.model.preprocessor:
                     param_grid["preprocessor__numeric__pca__n_components"] = (
-                        self.config.PCA.N_COMPONENTS + [None]
+                        self.config.PCA.N_COMPONENTS
+                        if self.config.PCA.N_COMPONENTS
+                        else [None]
                     )
                 else:
                     param_grid["pca__n_components"] = self.config.PCA.N_COMPONENTS + [
@@ -239,28 +294,65 @@ class MLFlowTrainer:
                 param_grid,
                 cv=int(1 / self.config.DATASET.TEST_SIZE),
                 scoring={
+                    "f1_score_true": make_scorer(score_func=positive_f1),
                     "f1_score": "f1_macro",
                     "f1_score_micro": "f1_micro",
                     "recall": "recall",
                     "roc_auc_score": "roc_auc",
                 },
-                refit="f1_score",
+                refit="f1_score_true",
                 verbose=1,
                 n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
             )
 
-            # Fit
+            # 1. Fit - Grid Search CV
             search.fit(X, y)
+            mlflow.autolog(disable=True)
 
             # Save only the best estimator
             self.model.pipeline = search.best_estimator_
+            best_score = search.best_score_
+
+            # 2. Fit - Tune Threshold CV
+            if self.config.TUNE_THRESHOLD:
+                tuned_model = TunedThresholdClassifierCV(
+                    search.best_estimator_,
+                    scoring=make_scorer(score_func=positive_f1),
+                    store_cv_results=True,
+                    random_state=self.config.DATASET.RANDOM_STATE,
+                    n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
+                ).fit(X, y)
+
+                print(
+                    f"[TunedThresholdClassifierCV] Cut-off point found at {tuned_model.best_threshold_:.3f}"
+                )
+
+                self.model.pipeline = tuned_model
+
+                # Log evaluation metrics - TunedThresholdClassifierCV
+                mlflow.log_metrics({"f1_score_best_tuned": tuned_model.best_score_})
+
+                save_dir = ".cache"
+                if not path.isdir(save_dir):
+                    os.makedirs(save_dir, exist_ok=True)
+                csv_path = path.join(save_dir, "cv_results_tuned.csv")
+                DataFrame(tuned_model.cv_results_).to_csv(csv_path)
+                mlflow.log_artifact(csv_path, artifact_path="tune_threshold")
+                os.remove(csv_path)
+
+                # Log best threshold
+                mlflow.log_params({"tuned_threshold": tuned_model.best_threshold_})
+
+                registry_dict = search.best_params_
+                registry_dict["classifier__threshold"] = tuned_model.best_threshold_
+                best_score = tuned_model.best_score_
 
             # Log model & experiment info
             mlflow.log_params(dict(self.config))
-            mlflow.log_params(search.best_params_)
 
             # Log evaluation metrics
             mlflow.log_metrics({"f1_score_best": search.best_score_})
+
             save_dir = ".cache"
             if not path.isdir(save_dir):
                 os.makedirs(save_dir, exist_ok=True)
@@ -290,9 +382,7 @@ class MLFlowTrainer:
             except:
                 prev_best = 0
 
-            if (
-                np.float32(search.best_score_) - np.float32(prev_best)
-            ) > MODEL_IMPROVEMENT_THR:
+            if (np.float32(best_score) - np.float32(prev_best)) > MODEL_IMPROVEMENT_THR:
                 print(
                     "Trained model is better than the latest version. Saving model to the registry.."
                 )
@@ -310,13 +400,21 @@ class MLFlowTrainer:
                     name=self.model_name,
                     version=model_info.version,
                     key="f1_score",
-                    value=search.best_score_,
+                    value=(
+                        tuned_model.best_score_
+                        if self.config.TUNE_THRESHOLD
+                        else search.best_score_
+                    ),
                 )
                 self.client.set_model_version_tag(
                     name=self.model_name,
                     version=model_info.version,
                     key="params",
-                    value=json.dumps(search.best_params_),
+                    value=(
+                        registry_dict
+                        if self.config.TUNE_THRESHOLD
+                        else json.dumps(search.best_params_)
+                    ),
                 )
                 self.client.set_model_version_tag(
                     name=self.model_name,
@@ -333,5 +431,5 @@ class MLFlowTrainer:
                 )
 
         # Turn OFF logger until next run
-        mlflow.autolog(disable=True)
+        mlflow.end_run()
         print("Experiment run completed and logged in MLFlow")
