@@ -30,6 +30,10 @@ SAMPLER_TARGETS = {
     0: 150000,
     1: 50000,
 }
+CUSTOM_PR_WEIGHTS = {
+    "precision": 1,
+    "recall": 3,
+}
 
 
 def positive_f1(y_true, y_pred):
@@ -42,6 +46,28 @@ def positive_recall(y_true, y_pred):
     return classification_report(y_true, y_pred, target_names=[0, 1], output_dict=True)[
         1
     ]["recall"]
+
+
+def weighted_f1_custom(y_true, y_pred):
+    cls_report = classification_report(
+        y_true, y_pred, target_names=[0, 1], output_dict=True
+    )
+    precision = cls_report[1]["precision"]
+    recall = cls_report[1]["recall"]
+    score = (
+        2
+        * (
+            precision
+            * CUSTOM_PR_WEIGHTS["precision"]
+            * recall
+            * CUSTOM_PR_WEIGHTS["recall"]
+        )
+        / (
+            (precision * CUSTOM_PR_WEIGHTS["precision"])
+            + (recall * CUSTOM_PR_WEIGHTS["recall"])
+        )
+    )
+    return score
 
 
 class MLFlowTrainer:
@@ -295,12 +321,13 @@ class MLFlowTrainer:
                 cv=int(1 / self.config.DATASET.TEST_SIZE),
                 scoring={
                     "f1_score_true": make_scorer(score_func=positive_f1),
+                    "f1_score_custom": make_scorer(score_func=weighted_f1_custom),
                     "f1_score": "f1_macro",
                     "f1_score_micro": "f1_micro",
                     "recall": "recall",
                     "roc_auc_score": "roc_auc",
                 },
-                refit="f1_score_true",
+                refit="f1_score_custom",
                 verbose=1,
                 n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
             )
@@ -317,7 +344,8 @@ class MLFlowTrainer:
             if self.config.TUNE_THRESHOLD:
                 tuned_model = TunedThresholdClassifierCV(
                     search.best_estimator_,
-                    scoring=make_scorer(score_func=positive_f1),
+                    # scoring=make_scorer(score_func=positive_f1),
+                    scoring=make_scorer(score_func=weighted_f1_custom),
                     store_cv_results=True,
                     random_state=self.config.DATASET.RANDOM_STATE,
                     n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
