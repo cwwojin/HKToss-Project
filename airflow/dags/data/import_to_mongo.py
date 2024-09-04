@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def _import_data(**kwargs):
     connection_string = os.environ.get("MONGODB_URL")
 
@@ -52,7 +53,9 @@ def _import_data(**kwargs):
         if documents_to_insert:
             # Bulk insert 문서들
             result = collection.insert_many(documents_to_insert)
-            print(f"Inserted {len(result.inserted_ids)} new documents into the database.")
+            print(
+                f"Inserted {len(result.inserted_ids)} new documents into the database."
+            )
         else:
             print("No new documents to insert.")
 
@@ -61,4 +64,3 @@ def _import_data(**kwargs):
 
     finally:
         client.close()
-

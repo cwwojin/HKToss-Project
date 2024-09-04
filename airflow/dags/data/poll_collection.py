@@ -5,11 +5,12 @@ import os
 
 load_dotenv()
 
+
 def poll_mongo_collection(**kwargs):
     connection_string = os.environ.get("MONGODB_URL")
     if not connection_string:
         raise ValueError("MONGODB_URL이 환경 변수에 설정되지 않았습니다.")
-    
+
     client = MongoClient(connection_string)
     database = client["mongodatabase"]
     collection = database["dataset_main"]
@@ -38,6 +39,7 @@ def poll_mongo_collection(**kwargs):
 
     finally:
         client.close()
-        
+
+
 if __name__ == "__main__":
     poll_mongo_collection()

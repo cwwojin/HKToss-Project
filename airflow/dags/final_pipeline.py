@@ -34,6 +34,7 @@ def get_csv_file_path(**kwargs):
 
     return file_path
 
+
 def run_poll_mongo_collection(**kwargs):
     # 이전에 저장된 last_checked_id 불러오기 (없으면 None)
     last_checked_id = Variable.get("last_checked_id", default_var=None)
