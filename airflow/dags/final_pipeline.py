@@ -6,6 +6,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.models import Variable
 
 from data.import_to_mongo import _import_data
+from data.poll_collection import poll_mongo_collection
 from data.fetch_data import _fetch_data
 from data.load_dataset import load_dataset
 from data.run_experiment import _run_experiment
@@ -33,6 +34,17 @@ def get_csv_file_path(**kwargs):
 
     return file_path
 
+def run_poll_mongo_collection(**kwargs):
+    # 이전에 저장된 last_checked_id 불러오기 (없으면 None)
+    last_checked_id = Variable.get("last_checked_id", default_var=None)
+
+    # MongoDB 컬렉션 폴링
+    new_last_checked_id = poll_mongo_collection(last_checked_id)
+
+    # 새로운 last_checked_id가 있으면 저장
+    if new_last_checked_id:
+        Variable.set("last_checked_id", str(new_last_checked_id))
+
 
 default_args = {"start_date": datetime(2024, 1, 1)}
 
@@ -59,6 +71,12 @@ with DAG(
         execution_timeout=timedelta(minutes=10),
     )
 
+    poll_mongo_collection_task = PythonOperator(
+        task_id="poll_mongo_collection_task",
+        python_callable=run_poll_mongo_collection,  # Airflow에서 호출할 함수
+        execution_timeout=timedelta(minutes=5),
+    )
+
     fetch_data = PythonOperator(
         task_id="fetch_data",
         python_callable=_fetch_data,
@@ -78,6 +96,7 @@ with DAG(
     (
         get_csv_file_path_task
         >> import_data_task
+        >> poll_mongo_collection_task
         >> fetch_data
         >> combine_data
         >> load_dataset_task
