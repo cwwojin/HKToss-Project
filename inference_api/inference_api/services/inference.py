@@ -9,7 +9,9 @@ from pandas import DataFrame, Series
 from sqlalchemy import Engine, text
 
 from inference_api.config import config
-from inference_api.models import InferenceDto
+from inference_api.models import InferenceDto, InferenceResult
+
+from datetime import datetime, timedelta
 
 
 class InferenceService:
@@ -17,10 +19,13 @@ class InferenceService:
     engine: Engine
     # Best Model
     model_name: str
+    model_cached_time: datetime | None
     # Cached Model
     cached_model_name: str
+    cached_model_cached_time: datetime | None
 
     def __init__(self):
+        # S3, DB init
         self.s3 = client(
             "s3",
             aws_access_key_id=config.aws_access_key_id,
@@ -28,10 +33,16 @@ class InferenceService:
             region_name=config.aws_default_region,
         )
         self.engine = sqlalchemy.create_engine(config.mlflow_db_uri)
-        self.model_name = None
+
+        # Best Model init
         self.model = None
+        self.model_name = None
+        self.model_cached_time = None
+
+        # Cached Model init
         self.cached_model = None
         self.cached_model_name = None
+        self.cached_model_cached_time = None
 
     def _run_select_query(self, query: str, args: dict = None):
         """retrieve rows from DB."""
@@ -89,6 +100,7 @@ class InferenceService:
             model_info = self.get_model_info(model_name)
 
             self.cached_model_name = model_name
+            self.cached_model_cached_time = datetime.now()
             self.cached_model = self._download_model(model_info["storage_location"])
 
     def load_best_model(self):
@@ -98,6 +110,7 @@ class InferenceService:
         ]
 
         self.model_name = best_model["name"]
+        self.model_cached_time = datetime.now()
         self.model = self._download_model(best_model["storage_location"])
 
     def _preprocess_input(self, input: DataFrame):
@@ -111,7 +124,12 @@ class InferenceService:
 
         return X, y
 
-    def get_inference_results(self, inferenceDto: InferenceDto, model_name: str = None):
+    def get_inference_results(
+        self,
+        inferenceDto: InferenceDto,
+        model_name: str = None,
+        force_reload: bool = False,
+    ) -> List[InferenceResult]:
         """run inference on either specified model or the best model"""
 
         # Preprocess
@@ -121,21 +139,35 @@ class InferenceService:
 
         # Setup model
         if model_name:
-            self.load_model_by_name(model_name)
-            pred_probs = self.cached_model.predict_proba(X)
-            preds = np.argmax(pred_probs, axis=1)
-        else:
-            if not self.model:
-                self.load_best_model()
-            pred_probs = self.model.predict_proba(X)
-            preds = np.argmax(pred_probs, axis=1)
+            now = datetime.now()
+            if (
+                force_reload
+                or (not self.cached_model)
+                or (model_name != self.cached_model_name)
+                or (now - self.cached_model_cached_time) > timedelta(hours=24)
+            ):
+                self.load_model_by_name(model_name)
 
-        result = (
+            pred_probs = self.cached_model.predict_proba(X)
+            preds = self.cached_model.predict(X)
+        else:
+            now = datetime.now()
+            if (
+                force_reload
+                or (not self.model)
+                or (now - self.model_cached_time) > timedelta(hours=24)
+            ):
+                self.load_best_model()
+
+            pred_probs = self.model.predict_proba(X)
+            preds = self.model.predict(X)
+
+        result: List[InferenceResult] = (
             DataFrame(
                 {
                     "NAME": input["NAME"],
-                    "pred_probs": Series(pred_probs[:, 1], index=y.index),
-                    "preds": Series(preds, index=y.index),
+                    "pred_probs": Series(pred_probs[:, 1], index=y.index).astype(float),
+                    "preds": Series(preds, index=y.index).astype(int),
                     "gt": y,
                 }
             )

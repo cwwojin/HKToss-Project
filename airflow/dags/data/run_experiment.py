@@ -1,6 +1,7 @@
 from hktoss_package.trainers import MLFlowTrainer
 from hktoss_package.config import get_cfg_defaults
 import pandas as pd
+from datetime import datetime
 import os
 
 
@@ -10,6 +11,9 @@ def _run_experiment(**kwargs):
 
     cfg.MODEL_TYPE = kwargs["model"]
     cfg.DATASET.SAMPLER = kwargs["sampler"]
+
+    if cfg.MODEL_TYPE == "randomforest" or cfg.MODEL_TYPE == "xgboost":
+        cfg.DATASET.TEST_SIZE = 0.3
 
     print(cfg.MODEL_TYPE)
     print(cfg.DATASET.SAMPLER)
@@ -21,8 +25,10 @@ def _run_experiment(**kwargs):
         tracking_uri=os.environ.get("MLFLOW_TRACKING_URI"), config=cfg
     )
 
+    current_weekday = datetime.now().strftime("%A")
+
     # 데이터셋 로드
-    temp_csv_path = ".cache/temp_dataset.csv"  # load_dataset 함수에서 생성한 파일 경로와 일치해야 함
+    temp_csv_path = f".cache/{current_weekday}_add_dataset.csv"  # load_dataset 함수에서 생성한 파일 경로와 일치해야 함
 
     dataset_df = pd.read_csv(temp_csv_path, low_memory=False)
 

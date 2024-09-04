@@ -1,8 +1,8 @@
 services:
     # API Container
-    api:
+    inference-api:
         platform: linux/amd64
-        container_name: inference_api
+        container_name: inference-api
         build:
             context: .
             dockerfile: dockerfiles/Dockerfile.api
@@ -13,3 +13,19 @@ services:
         profiles:
             - full
             - api
+    # Streamlit Container
+    client:
+        container_name: streamlit
+        platform: linux/amd64
+        build:
+            context: .
+            dockerfile: dockerfiles/Dockerfile.streamlit
+        image: streamlit
+        pull_policy: build
+        volumes:
+            - ./client/.cache:/usr/src/app/.cache
+        ports:
+            - 8501:8501
+        profiles:
+            - full
+            - client

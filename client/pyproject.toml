@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "client"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+package-mode = false
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "1.37.1"
+pandas = "2.0.3"
+matplotlib = "3.7.5"
+python-dotenv = "^1.0.1"
+boto3 = "^1.35.10"
+requests = "^2.32.3"
+plotly = "^5.24.0"
+streamlit-cookies-controller = "0.0.4"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
