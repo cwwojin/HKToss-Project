@@ -11,7 +11,13 @@ from data.load_dataset import load_dataset
 from data.run_experiment import _run_experiment
 from data.combine_data import _combine_batches
 
-samplers = ["over_smote", "over_random", "under_random", None]
+samplers = [
+    "composite",
+    # None,
+    # "over_smote",
+    # "over_random",
+    # "under_random",
+]
 models = ["lightgbm", "catboost", "xgboost", "randomforest", "logistic", "mlp"]
 
 
