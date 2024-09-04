@@ -17,10 +17,13 @@ def _fetch_data():
 
     try:
         database = client["mongodatabase"]
-        collection = database["dataset_final"]
+        collection = database["dataset_main"]
+
+        # 전체 데이터 크기 계산
+        total_count = collection.count_documents({})
+        batch_size = total_count // 8  # 데이터의 1/4 크기로 배치 설정
 
         last_id = None
-        batch_size = 10000
         batch_num = 0  # 배치 번호를 추가하여 파일이 덮어씌워지지 않도록
 
         while True:
@@ -37,6 +40,7 @@ def _fetch_data():
 
             # .cache 디렉토리 생성 (존재하지 않는 경우)
             cache_dir = "/opt/airflow/.cache"
+            # cache_dir = ".tmp/dataset/.cache"
             os.makedirs(cache_dir, exist_ok=True)
 
             # 배치 데이터를 각각 저장하여 메모리 사용을 줄임
@@ -53,7 +57,3 @@ def _fetch_data():
 
     finally:
         client.close()
-
-
-if __name__ == "__main__":
-    _fetch_data()

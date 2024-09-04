@@ -174,3 +174,4 @@ catboost_info/
 
 # Extras
 .DS_Store
+*.csv

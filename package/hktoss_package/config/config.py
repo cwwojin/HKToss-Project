@@ -86,7 +86,7 @@ _C.CATBOOST.l2_leaf_reg = [1, 3, 5]
 
 # MLP
 _C.MLP = CN()
-_C.MLP.hidden_layer_sizes = [(50,), (100,), (100, 50)]
+_C.MLP.hidden_layer_sizes = [(100,), (100, 50)]
 _C.MLP.activation = ["relu", "tanh"]
 _C.MLP.solver = ["adam"]
 _C.MLP.alpha = [0.001, 0.01]
@@ -98,7 +98,7 @@ _C.MLP.learning_rate = ["adaptive"]
 
 # Grid Search
 _C.GRID_SEARCH = True
-_C.MULTIPROCESSING = False
+_C.MULTIPROCESSING = True
 _C.PCA = CN()
 _C.PCA.N_COMPONENTS = ["mle"]
 
