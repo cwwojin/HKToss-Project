@@ -28,7 +28,7 @@ from yacs.config import CfgNode as CN
 MODEL_IMPROVEMENT_THR = 1e-4
 SAMPLER_TARGETS = {
     0: 150000,
-    1: 100000,
+    1: 50000,
 }
 CUSTOM_PR_WEIGHTS = {
     "precision": 1,
@@ -329,7 +329,8 @@ class MLFlowTrainer:
                 tuned_model = TunedThresholdClassifierCV(
                     search.best_estimator_,
                     # scoring=make_scorer(score_func=positive_f1),
-                    scoring="balanced_accuracy",
+                    scoring="roc_auc",
+                    # scoring="balanced_accuracy",
                     store_cv_results=True,
                     random_state=self.config.DATASET.RANDOM_STATE,
                     n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
@@ -354,6 +355,7 @@ class MLFlowTrainer:
 
                 # Log best threshold
                 mlflow.log_params({"tuned_threshold": tuned_model.best_threshold_})
+                mlflow.log_metrics({"tuned_threshold": tuned_model.best_threshold_})
 
                 registry_dict = search.best_params_
                 registry_dict["classifier__threshold"] = tuned_model.best_threshold_
@@ -373,18 +375,25 @@ class MLFlowTrainer:
             os.remove(csv_path)
 
             # Run Test Set
+            y_test_preds = self.model.pipeline.predict(X_test)
             test_cls_report = classification_report(
                 y_test,
-                self.model.pipeline.predict(X_test),
+                y_test_preds,
                 output_dict=True,
             )
-            print(test_cls_report)
             test_f1 = test_cls_report["macro avg"]["f1-score"]
             mlflow.log_metrics(
                 {
                     "test_precision": test_cls_report["macro avg"]["precision"],
                     "test_recall": test_cls_report["macro avg"]["recall"],
                     "test_f1_score": test_f1,
+                }
+            )
+            mlflow.log_dict(test_cls_report, "testset/test_cls_report.json")
+            test_roc_auc = roc_auc_score(y_test, y_test_preds)
+            mlflow.log_metrics(
+                {
+                    "test_roc_auc_score": test_roc_auc,
                 }
             )
 

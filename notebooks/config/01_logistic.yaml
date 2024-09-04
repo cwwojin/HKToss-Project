@@ -1,7 +1,7 @@
 AIRFLOW: False
 MODEL_TYPE: logistic
 DATASET:
-  PATH: .tmp/dataset/dataset_train_v2.csv
+  PATH: .tmp/dataset/dataset_train.csv
   TEST_SIZE: 0.2
   RANDOM_STATE: 42
   ID_COL_NAME: SK_ID_CURR
