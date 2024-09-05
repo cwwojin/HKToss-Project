@@ -4,13 +4,13 @@ HK Toss MLOps Project - **MLOps 를 활용한 대출 연체 예측 서비스 구
 
 ## Table of Contents
 
--   [HKToss-Project](#hktoss-project)
-    -   [Table of Contents](#table-of-contents)
-    -   [1. Project Structure](#1-project-structure)
-    -   [2. Installation](#2-installation)
-    -   [3. Contribution](#3-contribution)
-    -   [4. Dataset](#4-dataset)
-    -   [Authors](#authors)
+- [HKToss-Project](#hktoss-project)
+  - [Table of Contents](#table-of-contents)
+  - [1. Project Structure](#1-project-structure)
+  - [2. Installation](#2-installation)
+  - [3. Contribution](#3-contribution)
+  - [4. Dataset](#4-dataset)
+  - [Authors](#authors)
 
 ## 1. Project Structure
 
@@ -38,9 +38,9 @@ HKToss-Project/
 
 #### 2.2.1. Airflow
 
-    ```shell
-    $ docker compose -f docker-compose.airflow.yml up
-    ```
+```shell
+$ docker compose -f docker-compose.airflow.yml up
+```
 
 #### 2.2.2. Client / Inference API
 

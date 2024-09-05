@@ -328,8 +328,7 @@ class MLFlowTrainer:
             if self.config.TUNE_THRESHOLD:
                 tuned_model = TunedThresholdClassifierCV(
                     search.best_estimator_,
-                    # scoring=make_scorer(score_func=positive_f1),
-                    scoring="roc_auc",
+                    scoring=make_scorer(score_func=positive_f1),
                     # scoring="balanced_accuracy",
                     store_cv_results=True,
                     random_state=self.config.DATASET.RANDOM_STATE,
