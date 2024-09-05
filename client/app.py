@@ -23,9 +23,7 @@ try:
 except:
     pass
 
-from boto3 import client
-from matplotlib import font_manager, rc
-from utils import APIHelper
+from utils import APIHelper, download_data, load_demo_data, load_total_data
 
 # API Helper
 api = APIHelper(
@@ -33,41 +31,10 @@ api = APIHelper(
     api_key=os.environ.get("INFERENCE_API_KEY"),
 )
 
-# 데이터셋 csv 파일 다운로드
-DATA_PATH = ".cache"
-demo_path = path.join(DATA_PATH, "dataset_demo.csv")
-total_path = path.join(DATA_PATH, "dataset_total.csv")
-
-if not path.isdir(DATA_PATH):
-    os.makedirs(DATA_PATH, exist_ok=True)
-
-if not path.isfile(demo_path):
-    s3 = client(
-        "s3",
-        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-        region_name=os.environ.get("AWS_REGION"),
-    )
-    s3.download_file(
-        "hktoss-mlops",
-        "datasets/dataset_demo.csv",
-        demo_path,
-    )
-    s3.close()
-
-if not path.isfile(total_path):
-    s3 = client(
-        "s3",
-        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-        region_name=os.environ.get("AWS_REGION"),
-    )
-    s3.download_file(
-        "hktoss-mlops",
-        "datasets/dataset_total.csv",
-        total_path,
-    )
-    s3.close()
+# 데이터 로드
+download_data()
+demo = load_demo_data()
+total = load_total_data()
 
 
 # HTML을 사용하여 스타일 추가
@@ -152,22 +119,6 @@ elif platform.system() == "Linux":  # 리눅스 (구글 콜랩)
     plt.rc("font", family="Malgun Gothic")
 plt.rcParams["axes.unicode_minus"] = False  # 한글 폰트 사용시 마이너스 폰트 깨짐 해결
 
-
-# 데이터셋 불러오기
-@st.cache_data
-def load_demo_data():
-    df = pd.read_csv(demo_path, low_memory=False)
-    return df
-
-
-def load_total_data():
-    df = pd.read_csv(total_path, low_memory=False)
-    return df
-
-
-# 데이터 로드
-demo = load_demo_data()
-total = load_total_data()
 
 # 열 이름 매핑
 column_mapping = {

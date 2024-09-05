@@ -1,6 +1,6 @@
 # HKToss-Project
 
-HK Toss MLOps - Project
+HK Toss MLOps Project - **MLOps 를 활용한 대출 연체 예측 서비스 구축**
 
 ## Table of Contents
 
@@ -9,11 +9,55 @@ HK Toss MLOps - Project
     -   [1. Project Structure](#1-project-structure)
     -   [2. Installation](#2-installation)
     -   [3. Contribution](#3-contribution)
+    -   [4. Dataset](#4-dataset)
     -   [Authors](#authors)
 
 ## 1. Project Structure
 
+이 프로젝트는 다음과 같은 5가지 컴포넌트로 구성되있습니다.
+
+```
+HKToss-Project/
+│
+├── airflow/        # Airflow DAG - automated model training & deployment
+├── client/         # Streamlit - web dashboard service
+├── inference_api/  # ML Inference Server
+├── notebooks/      # Data Preprocessing(.ipynb) files, ML package test scripts
+└── package/        # Python library for ML Model trainer + MLflow Logging
+
+```
+
 ## 2. Installation
+
+### 2.1. Prerequisites
+
+-   환경변수 파일 `.env` 루트 폴더에 저장
+-   `notebooks/01_data_prep.ipynb` 실행 전, 원본 데이터셋 다운로드
+
+### 2.2. Run with Docker
+
+#### 2.2.1. Airflow
+
+    ```shell
+    $ docker compose -f docker-compose.airflow.yml up
+    ```
+
+#### 2.2.2. Client / Inference API
+
+-   client + API 실행
+
+    ```shell
+    $ docker compose --profile full -f docker-compose.yml up
+    ```
+
+-   client만, API 만 실행
+
+    ```shell
+    $ docker compose --profile client -f docker-compose.yml up
+    $ docker compose --profile api -f docker-compose.yml up
+    ```
+
+-   _(각 서비스 폴더별 README 참고.)_
 
 ## 3. Contribution
 
@@ -53,6 +97,10 @@ HK Toss MLOps - Project
 
 -   이슈 작성은 **버그 공유** 를 위해 사용합니다.
 -   `Bug Report` 항목으로 작성 및 템플릿 준수하여 작성합니다.
+
+## 4. Dataset
+
+이 프로젝트에서는 [**Kaggle - Home Credit Default Risk**](https://www.kaggle.com/competitions/home-credit-default-risk) 데이터셋을 사용하였습니다.
 
 ## Authors
 
