@@ -6,7 +6,7 @@ import os
 load_dotenv()
 
 
-def poll_mongo_collection(**kwargs):
+def poll_mongo_collection(last_checked_id=None):
     connection_string = os.environ.get("MONGODB_URL")
     if not connection_string:
         raise ValueError("MONGODB_URL이 환경 변수에 설정되지 않았습니다.")
@@ -15,7 +15,6 @@ def poll_mongo_collection(**kwargs):
     database = client["mongodatabase"]
     collection = database["dataset_main"]
 
-    last_checked_id = kwargs[""]
     # polling_interval = 10  # 폴링 간격 (초)
 
     try:
