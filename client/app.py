@@ -69,10 +69,12 @@ if not path.isfile(total_path):
     )
     s3.close()
 
+
 # HTML을 사용하여 스타일 추가
 st.markdown(
     """
     <style>
+
     /* 사이드바 배경색 설정 */
     [data-testid="stSidebar"] {
         background-color: #0064FF;  /* Toss Blue */
@@ -103,10 +105,6 @@ st.markdown(
         color: white;  /* 버튼 텍스트 색상 */
         border: 2px solid white !important;  /* 버튼 테두리 색상 */
         border-radius: 5px;  /* 버튼 테두리 둥글기 */
-    }
-    
-    a[data-testid='stSidebarNavLink'] {
-        display:none;
     }
 
     [data-testid='stSidebarHeader'] {

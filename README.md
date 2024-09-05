@@ -4,16 +4,16 @@ HK Toss MLOps - Project
 
 ## Table of Contents
 
-- [HKToss-Project](#hktoss-project)
-  - [Table of Contents](#table-of-contents)
-  - [1. Installation](#1-installation)
-  - [2. Run with Docker](#2-run-with-docker)
-  - [3. Contribution](#3-contribution)
-  - [Authors](#authors)
+-   [HKToss-Project](#hktoss-project)
+    -   [Table of Contents](#table-of-contents)
+    -   [1. Project Structure](#1-project-structure)
+    -   [2. Installation](#2-installation)
+    -   [3. Contribution](#3-contribution)
+    -   [Authors](#authors)
 
-## 1. Installation
+## 1. Project Structure
 
-## 2. Run with Docker
+## 2. Installation
 
 ## 3. Contribution
 

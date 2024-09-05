@@ -30,6 +30,10 @@ SAMPLER_TARGETS = {
     0: 150000,
     1: 50000,
 }
+CUSTOM_PR_WEIGHTS = {
+    "precision": 1,
+    "recall": 3,
+}
 
 
 def positive_f1(y_true, y_pred):
@@ -42,6 +46,32 @@ def positive_recall(y_true, y_pred):
     return classification_report(y_true, y_pred, target_names=[0, 1], output_dict=True)[
         1
     ]["recall"]
+
+
+def weighted_f1_custom(y_true, y_pred):
+    cls_report = classification_report(
+        y_true, y_pred, target_names=[0, 1], output_dict=True
+    )
+    precision = cls_report[1]["precision"]
+    recall = cls_report[1]["recall"]
+    divisor = (precision * CUSTOM_PR_WEIGHTS["precision"]) + (
+        recall * CUSTOM_PR_WEIGHTS["recall"]
+    )
+    score = (
+        (
+            2
+            * (
+                precision
+                * CUSTOM_PR_WEIGHTS["precision"]
+                * recall
+                * CUSTOM_PR_WEIGHTS["recall"]
+            )
+            / divisor
+        )
+        if divisor > 0
+        else 0
+    )
+    return score
 
 
 class MLFlowTrainer:
@@ -108,6 +138,15 @@ class MLFlowTrainer:
         df_x[numeric_columns] = df_x[numeric_columns].astype(np.float64)
         df_x[bool_columns] = df_x[bool_columns].astype(np.float64)
 
+        # Train / Test Split
+        df_x, df_x_test, df_y, df_y_test = train_test_split(
+            df_x,
+            df_y,
+            test_size=0.1,
+            random_state=self.config.DATASET.RANDOM_STATE,
+            stratify=df_y,
+        )
+
         # Data Sampler
         sampler = self.config.DATASET.SAMPLER
         if sampler == "under_random":
@@ -151,27 +190,7 @@ class MLFlowTrainer:
             )
             df_x, df_y = under_sampler.fit_resample(df_x, df_y)
 
-        # Don't use split if using grid-search
-        if grid_search:
-            return df_x, df_y, column_types
-        else:
-
-            # dataset split
-            X_train, X_test, y_train, y_test = train_test_split(
-                df_x,
-                df_y,
-                test_size=self.config.DATASET.TEST_SIZE,
-                random_state=self.config.DATASET.RANDOM_STATE,
-                stratify=df_y,
-            )
-
-            return (
-                X_train,
-                X_test,
-                y_train,
-                y_test,
-                column_types,
-            )
+        return df_x, df_x_test, df_y, df_y_test, column_types
 
     def run_experiment(self, dataframe: DataFrame):
         if self.config.GRID_SEARCH:
@@ -242,17 +261,9 @@ class MLFlowTrainer:
 
     def run_grid_search_experiment(self, dataframe: DataFrame):
         # prepare dataset
-        X, y, column_types = self.prepare_data(df=dataframe, grid_search=True)
-
-        # # if TUNE_THRESHOLD : keep 10%
-        # if self.config.TUNE_THRESHOLD:
-        #     X, X_thr, y, y_thr = train_test_split(
-        #         X,
-        #         y,
-        #         test_size=0.1,
-        #         random_state=self.config.DATASET.RANDOM_STATE,
-        #         stratify=y,
-        #     )
+        X, X_test, y, y_test, column_types = self.prepare_data(
+            df=dataframe, grid_search=True
+        )
 
         # load model
         if not self.model:
@@ -298,9 +309,10 @@ class MLFlowTrainer:
                     "f1_score": "f1_macro",
                     "f1_score_micro": "f1_micro",
                     "recall": "recall",
+                    "recall_true": make_scorer(score_func=positive_recall),
                     "roc_auc_score": "roc_auc",
                 },
-                refit="f1_score_true",
+                refit="recall_true",
                 verbose=1,
                 n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
             )
@@ -311,13 +323,14 @@ class MLFlowTrainer:
 
             # Save only the best estimator
             self.model.pipeline = search.best_estimator_
-            best_score = search.best_score_
 
             # 2. Fit - Tune Threshold CV
             if self.config.TUNE_THRESHOLD:
                 tuned_model = TunedThresholdClassifierCV(
                     search.best_estimator_,
-                    scoring=make_scorer(score_func=positive_f1),
+                    # scoring=make_scorer(score_func=positive_f1),
+                    scoring="roc_auc",
+                    # scoring="balanced_accuracy",
                     store_cv_results=True,
                     random_state=self.config.DATASET.RANDOM_STATE,
                     n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
@@ -330,7 +343,7 @@ class MLFlowTrainer:
                 self.model.pipeline = tuned_model
 
                 # Log evaluation metrics - TunedThresholdClassifierCV
-                mlflow.log_metrics({"f1_score_best_tuned": tuned_model.best_score_})
+                mlflow.log_metrics({"tuned_score": tuned_model.best_score_})
 
                 save_dir = ".cache"
                 if not path.isdir(save_dir):
@@ -342,16 +355,16 @@ class MLFlowTrainer:
 
                 # Log best threshold
                 mlflow.log_params({"tuned_threshold": tuned_model.best_threshold_})
+                mlflow.log_metrics({"tuned_threshold": tuned_model.best_threshold_})
 
                 registry_dict = search.best_params_
                 registry_dict["classifier__threshold"] = tuned_model.best_threshold_
-                best_score = tuned_model.best_score_
 
             # Log model & experiment info
             mlflow.log_params(dict(self.config))
 
             # Log evaluation metrics
-            mlflow.log_metrics({"f1_score_best": search.best_score_})
+            mlflow.log_metrics({"gs_score_best": search.best_score_})
 
             save_dir = ".cache"
             if not path.isdir(save_dir):
@@ -359,19 +372,32 @@ class MLFlowTrainer:
             csv_path = path.join(save_dir, "cv_results.csv")
             DataFrame(search.cv_results_).to_csv(csv_path)
             mlflow.log_artifact(csv_path, artifact_path="grid_search")
-
-            # Log model & artifacts to MLFlow
-            model_file = f"{self.model_name}.pkl"
-            model_path = path.join(save_dir, model_file)
-
-            self.model.export_pkl(model_path)
-            mlflow.log_artifact(model_path, artifact_path="model_pkl")
-
-            # Delete cached files
-            os.remove(model_path)
             os.remove(csv_path)
 
-            # Register the model only if score is improved
+            # Run Test Set
+            y_test_preds = self.model.pipeline.predict(X_test)
+            test_cls_report = classification_report(
+                y_test,
+                y_test_preds,
+                output_dict=True,
+            )
+            test_f1 = test_cls_report["macro avg"]["f1-score"]
+            mlflow.log_metrics(
+                {
+                    "test_precision": test_cls_report["macro avg"]["precision"],
+                    "test_recall": test_cls_report["macro avg"]["recall"],
+                    "test_f1_score": test_f1,
+                }
+            )
+            mlflow.log_dict(test_cls_report, "testset/test_cls_report.json")
+            test_roc_auc = roc_auc_score(y_test, y_test_preds)
+            mlflow.log_metrics(
+                {
+                    "test_roc_auc_score": test_roc_auc,
+                }
+            )
+
+            # Register the model as new version only if score is improved
             try:
                 prev_version = self.client.get_latest_versions(self.model_name)[0]
                 prev_best = (
@@ -382,7 +408,7 @@ class MLFlowTrainer:
             except:
                 prev_best = 0
 
-            if (np.float32(best_score) - np.float32(prev_best)) > MODEL_IMPROVEMENT_THR:
+            if (np.float32(test_f1) - np.float32(prev_best)) > MODEL_IMPROVEMENT_THR:
                 print(
                     "Trained model is better than the latest version. Saving model to the registry.."
                 )
@@ -400,18 +426,14 @@ class MLFlowTrainer:
                     name=self.model_name,
                     version=model_info.version,
                     key="f1_score",
-                    value=(
-                        tuned_model.best_score_
-                        if self.config.TUNE_THRESHOLD
-                        else search.best_score_
-                    ),
+                    value=test_f1,
                 )
                 self.client.set_model_version_tag(
                     name=self.model_name,
                     version=model_info.version,
                     key="params",
                     value=(
-                        registry_dict
+                        json.dumps(registry_dict)
                         if self.config.TUNE_THRESHOLD
                         else json.dumps(search.best_params_)
                     ),
