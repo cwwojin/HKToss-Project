@@ -370,14 +370,26 @@ if st.session_state.predict_clicked:
             # Plotly Chart 1. 대출 대비 연체 횟수
             st.markdown(
                 f"""
-            <p class='font-size-sub-subheader'>
-                💸 대출 횟수 
-                <span style='color: rgba(255, 255, 255, 0.5); font-size: 0.8em;'>
-                    ({name}님의 과거 대출 횟수: 
-                    <span style='color: rgba(255, 75, 75, 0.7);'>{loan_count}번</span>)
-                </span>
-            </p>
-            """,
+                <p class='font-size-sub-subheader'>
+                    💸 대출 횟수 <br>
+                    <span style='color: rgba(255, 255, 255, 0.5); font-size: 0.8em;'>
+                        ({name}님의 과거 대출 횟수: 
+                        <span style='color: rgba(255, 75, 75, 0.7);'>{loan_count}번</span>)
+                    </span>
+                </p>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.write(" ")
+            st.markdown(
+                f"""
+                <p class='font-size-sub-subheader' align='center'>
+                    <span style='font-size: 0.8em;'>
+                        전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수
+                    </span>
+                </p>
+                """,
                 unsafe_allow_html=True,
             )
 
@@ -401,8 +413,11 @@ if st.session_state.predict_clicked:
                 annotation_font_color="#FF4B4B",
             )
             fig.update_layout(
-                title_text=f"전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수",
-                title_x=0.25,
+                # title_text=f"전체 고객 과거 대출 횟수 분포 중 {name}님의 과거 대출 횟수",
+                # title_x=0.25,
+                margin=dict(
+                    t=20,
+                ),
                 xaxis_title_text="과거 대출 횟수",
                 bargap=0.05,
                 # bargroupgap=0.1,
@@ -426,6 +441,18 @@ if st.session_state.predict_clicked:
                 unsafe_allow_html=True,
             )
 
+            st.write(" ")
+            st.markdown(
+                f"""
+                <p class='font-size-sub-subheader' align='center'>
+                    <span style='font-size: 0.8em;'>
+                        전체 고객 대출 상환 비율 분포 중 {name}님의 비율
+                    </span>
+                </p>
+                """,
+                unsafe_allow_html=True,
+            )
+
             fig = go.Figure()
             fig.add_trace(
                 go.Histogram(
@@ -445,8 +472,11 @@ if st.session_state.predict_clicked:
             fig.update_xaxes(range=[0.0, 1.0])
             fig.update_yaxes(range=[0, 10000])
             fig.update_layout(
-                title_text=f"전체 고객 대출 상환 비율 분포 중 {name}님의 비율",
-                title_x=0.25,
+                # title_text=f"전체 고객 대출 상환 비율 분포 중 {name}님의 비율",
+                # title_x=0.25,
+                margin=dict(
+                    t=20,
+                ),
                 xaxis_title_text="대출 상환 비율",
                 bargap=0.05,
             )
@@ -495,6 +525,18 @@ if st.session_state.predict_clicked:
                 unsafe_allow_html=True,
             )
 
+            st.write(" ")
+            st.markdown(
+                f"""
+                <p class='font-size-sub-subheader' align='center'>
+                    <span style='font-size: 0.8em;'>
+                        연 수입 대비 총 부채 비율 분포에서 {name}님의 비율
+                    </span>
+                </p>
+                """,
+                unsafe_allow_html=True,
+            )
+
             fig = go.Figure()
             fig.add_trace(
                 go.Histogram(
@@ -514,8 +556,11 @@ if st.session_state.predict_clicked:
             fig.update_xaxes(range=[0.0, 5.0])
             fig.update_yaxes(range=[0, 13000])
             fig.update_layout(
-                title_text=f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율",
-                title_x=0.25,
+                # title_text=f"연 수입 대비 총 부채 비율 분포에서 {name}님의 비율",
+                # title_x=0.25,
+                margin=dict(
+                    t=20,
+                ),
                 xaxis_title_text="연 수입 대비 총 부채 비율",
                 bargap=0.05,
             )

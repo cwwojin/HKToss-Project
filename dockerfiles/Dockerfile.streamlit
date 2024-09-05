@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 
 # COPY
 COPY .env .
+COPY ./.streamlit ./.streamlit
 COPY ./client .
 
 # Install Font
