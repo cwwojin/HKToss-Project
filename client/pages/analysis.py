@@ -16,10 +16,7 @@ from PIL import Image
 from streamlit_cookies_controller import CookieController
 
 controller = CookieController()
-
-# from boto3 import client
-from matplotlib import font_manager, rc
-from utils import APIHelper
+from utils import APIHelper, load_demo_data, load_total_data, download_data
 
 # API Helper
 api = APIHelper(
@@ -27,10 +24,10 @@ api = APIHelper(
     api_key=os.environ.get("INFERENCE_API_KEY"),
 )
 
-# 데이터셋 csv 파일 다운로드
-DATA_PATH = ".cache"
-demo_path = path.join(DATA_PATH, "dataset_demo.csv")
-total_path = path.join(DATA_PATH, "dataset_total.csv")
+# 데이터 로드
+download_data()
+demo = load_demo_data()
+total = load_total_data()
 
 # HTML을 사용하여 스타일 추가
 st.markdown(
@@ -117,22 +114,6 @@ elif platform.system() == "Linux":  # 리눅스 (구글 콜랩)
     plt.rc("font", family="Malgun Gothic")
 plt.rcParams["axes.unicode_minus"] = False  # 한글 폰트 사용시 마이너스 폰트 깨짐 해결
 
-
-# 데이터셋 불러오기
-@st.cache_data
-def load_demo_data():
-    df = pd.read_csv(demo_path, low_memory=False)
-    return df
-
-
-def load_total_data():
-    df = pd.read_csv(total_path, low_memory=False)
-    return df
-
-
-# 데이터 로드
-demo = load_demo_data()
-total = load_total_data()
 
 # 열 이름 매핑
 column_mapping = {
