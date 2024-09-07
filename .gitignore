@@ -123,6 +123,7 @@ celerybeat.pid
 
 # Environments
 .env
+!.development.env
 .venv
 env/
 venv/
@@ -157,17 +158,20 @@ cython_debug/
 # Temporary
 .temp/
 .tmp/
+.data/
 
 # Bind Mounts
 .pgdata/
+.minio-data/
+.mongo-data/
 
 # Airflow
 airflow/logs
 airflow/plugins
 airflow/config
 
-# MLFlow
-.mlflow-data/
+# MLflow
+mlruns/
 
 # Catboost
 catboost_info/

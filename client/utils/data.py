@@ -21,6 +21,11 @@ def download_data():
             aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
             region_name=os.environ.get("AWS_REGION"),
+            endpoint_url=(
+                os.environ.get("MLFLOW_S3_ENDPOINT_URL")
+                if os.environ.get("PYTHON_ENV") == "development"
+                else None
+            ),
         )
         s3.download_file(
             "hktoss-mlops",

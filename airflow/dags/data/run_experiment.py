@@ -4,6 +4,13 @@ import pandas as pd
 from datetime import datetime
 import os
 
+from dotenv import load_dotenv
+
+env_path = (
+    ".development.env" if os.environ.get("PYTHON_ENV") == "development" else ".env"
+)
+load_dotenv(env_path)
+
 
 def _run_experiment(**kwargs):
     # 기본 설정을 가져옵니다.
