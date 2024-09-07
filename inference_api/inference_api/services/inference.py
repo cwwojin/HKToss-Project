@@ -31,6 +31,9 @@ class InferenceService:
             aws_access_key_id=config.aws_access_key_id,
             aws_secret_access_key=config.aws_secret_access_key,
             region_name=config.aws_default_region,
+            endpoint_url=(
+                config.s3_endpoint if config.python_env == "development" else None
+            ),
         )
         self.engine = sqlalchemy.create_engine(config.mlflow_db_uri)
 

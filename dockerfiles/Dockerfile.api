@@ -10,6 +10,7 @@ RUN apt-get update && \
 # Copy files
 COPY ./package /usr/src/package
 COPY .env .
+COPY .development.env .
 COPY ./inference_api .
 
 # Install Dependencies

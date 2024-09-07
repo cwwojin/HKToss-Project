@@ -3,7 +3,10 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = (
+    ".development.env" if os.environ.get("PYTHON_ENV") == "development" else ".env"
+)
+load_dotenv(env_path, override=True)
 
 
 def _import_data(**kwargs):

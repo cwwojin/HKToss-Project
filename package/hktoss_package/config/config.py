@@ -97,7 +97,7 @@ _C.MLP.learning_rate = ["adaptive"]
 
 # Grid Search
 _C.GRID_SEARCH = True
-_C.MULTIPROCESSING = True
+_C.MULTIPROCESSING = False
 _C.PCA = CN()
 _C.PCA.N_COMPONENTS = ["mle"]
 

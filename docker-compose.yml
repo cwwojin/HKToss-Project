@@ -13,6 +13,7 @@ services:
         profiles:
             - full
             - api
+
     # Streamlit Container
     client:
         container_name: streamlit
@@ -29,3 +30,52 @@ services:
         profiles:
             - full
             - client
+
+    # API - Local
+    inference-api-local:
+        platform: linux/amd64
+        container_name: inference-api
+        build:
+            context: .
+            dockerfile: dockerfiles/Dockerfile.api
+        image: inference_api
+        pull_policy: build
+        environment:
+            PYTHON_ENV: development
+        ports:
+            - 8000:8000
+        networks:
+            - local
+            - mlflow-network
+        profiles:
+            - dev
+            - dev-api
+
+    # Streamlit - Local
+    client-local:
+        container_name: streamlit
+        platform: linux/amd64
+        build:
+            context: .
+            dockerfile: dockerfiles/Dockerfile.streamlit
+        image: streamlit
+        pull_policy: build
+        environment:
+            PYTHON_ENV: development
+        volumes:
+            - ./client/.cache:/usr/src/app/.cache
+        ports:
+            - 5003:8501
+        networks:
+            - local
+            - mlflow-network
+        depends_on:
+            - inference-api-local
+        profiles:
+            - dev
+
+networks:
+    local:
+    mlflow-network:
+        name: mlflow-network
+        external: true
