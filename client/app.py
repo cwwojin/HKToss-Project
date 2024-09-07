@@ -6,7 +6,11 @@ from datetime import datetime
 # 환경변수 설정
 from dotenv import load_dotenv
 
-load_dotenv(".env")
+env_path = (
+    ".development.env" if os.environ.get("PYTHON_ENV") == "development" else ".env"
+)
+load_dotenv(env_path, override=True)
+
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -194,8 +198,8 @@ with st.sidebar.form(key="sidebar_form"):
     # text_input을 사용하여 대출 금액 직접 입력
 
     selected_amount = st.text_input(
-        "대출 금액 입력 (예: 1, 2 ,..., 50)", value="1"  # 기본값 설정
-    )
+        "대출 금액 입력 (예: 1, 2 ,..., 50)", value="1"
+    )  # 기본값 설정
 
     st.markdown(
         "<p class='font-size-sub-write'>" "[단위: 천만원]" "</p>",
