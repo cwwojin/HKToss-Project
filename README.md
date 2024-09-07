@@ -2,15 +2,19 @@
 
 HK Toss MLOps Project - **MLOps 를 활용한 대출 연체 예측 서비스 구축**
 
+![architecture-diagram](./.assets/images/HKToss-Project_architecture.png)
+
 ## Table of Contents
 
--   [HKToss-Project](#hktoss-project)
-    -   [Table of Contents](#table-of-contents)
-    -   [1. Project Structure](#1-project-structure)
-    -   [2. Installation](#2-installation)
-    -   [3. Contribution](#3-contribution)
-    -   [4. Dataset](#4-dataset)
-    -   [Authors](#authors)
+- [HKToss-Project](#hktoss-project)
+  - [Table of Contents](#table-of-contents)
+  - [1. Project Structure](#1-project-structure)
+  - [2. Installation](#2-installation)
+  - [3. Contribution](#3-contribution)
+  - [4. Dataset](#4-dataset)
+- [Appendix](#appendix)
+  - [Tech Stack](#tech-stack)
+  - [Authors](#authors)
 
 ## 1. Project Structure
 
@@ -101,6 +105,12 @@ HKToss-Project/
 ## 4. Dataset
 
 이 프로젝트에서는 [**Kaggle - Home Credit Default Risk**](https://www.kaggle.com/competitions/home-credit-default-risk) 데이터셋을 사용하였습니다.
+
+# Appendix
+
+## Tech Stack
+
+![stack-diagram](./.assets/images/HKToss-Project_stack.png)
 
 ## Authors
 
