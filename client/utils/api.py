@@ -68,7 +68,8 @@ class APIHelper:
             num=num,
         ).tolist()
         income_dpd_ratios = [
-            inc / (row["CNT_CHILDREN"].item() + 1) for inc in incomes  # 소득 대비 부양 부담 비율
+            inc / (row["CNT_CHILDREN"].item() + 1)
+            for inc in incomes  # 소득 대비 부양 부담 비율
         ]
         drc_indexes = [
             0 if (inc == 0) else (row["AMT_ANNUITY_MEAN"].item() / inc)

@@ -218,7 +218,9 @@ with st.sidebar.form(key="sidebar_form"):
     try:
         selected_amount_int = 10000000 * int(selected_amount)
         if not (10_000_000 <= selected_amount_int <= 500_000_000):
-            st.write("대출 금액이 유효한 범위 내에 있지 않습니다. 1천만원에서 50천만원 사이로 입력하세요.")
+            st.write(
+                "대출 금액이 유효한 범위 내에 있지 않습니다. 1천만원에서 50천만원 사이로 입력하세요."
+            )
     except ValueError:
         st.write("유효한 숫자를 입력하세요.")
 
@@ -226,7 +228,9 @@ with st.sidebar.form(key="sidebar_form"):
     predict_button = st.form_submit_button("확인하기", disabled=True)
     if predict_button:
         st.session_state.predict_clicked = True
-        st.session_state.evaluate_clicked = False  # 새로운 확인하기 클릭 시 평가 상태 리셋
+        st.session_state.evaluate_clicked = (
+            False  # 새로운 확인하기 클릭 시 평가 상태 리셋
+        )
 
 # 본 화면
 
@@ -315,7 +319,9 @@ if st.session_state.predict_clicked:
             "</p>",
             unsafe_allow_html=True,
         )
-        st.write("➔  자녀에 대한 부양 부담이 가족 내에서 얼마나 큰 비중을 차지하는지를 나타내요.")
+        st.write(
+            "➔  자녀에 대한 부양 부담이 가족 내에서 얼마나 큰 비중을 차지하는지를 나타내요."
+        )
 
         # 소득 대비 부양 부담 지수 (Income_to_Dependents_Ratio)
         income_to_dependents_ratio = selected_user.get(
@@ -328,7 +334,9 @@ if st.session_state.predict_clicked:
             "</p>",
             unsafe_allow_html=True,
         )
-        st.write("➔  개인의 소득이 자녀 부양에 얼마나 적절하게 분배될 수 있는지를 나타내요.")
+        st.write(
+            "➔  개인의 소득이 자녀 부양에 얼마나 적절하게 분배될 수 있는지를 나타내요."
+        )
         # 점선 추가
         st.markdown("<hr style='border: 1px dashed gray;' />", unsafe_allow_html=True)
 
@@ -372,7 +380,9 @@ if st.session_state.predict_clicked:
                     x=total["LOAN_COUNT"],
                     name="",
                     hovertemplate="과거 대출 횟수: %{x}, Count: %{y}",
-                    xbins=dict(start=0, end=int(demo["과거 대출 횟수"].max()) + 1, size=1),
+                    xbins=dict(
+                        start=0, end=int(demo["과거 대출 횟수"].max()) + 1, size=1
+                    ),
                     marker_color="#0064FF",
                 )
             )
@@ -482,7 +492,9 @@ if st.session_state.predict_clicked:
             st.write(" ")
             # Plotly Chart 3. 연 수입 대비 총 부채 비율 차트
             st.markdown(
-                "<p class='font-size-sub-subheader'>" "💸 연 수입 대비 총 부채 비율" "</p>",
+                "<p class='font-size-sub-subheader'>"
+                "💸 연 수입 대비 총 부채 비율"
+                "</p>",
                 unsafe_allow_html=True,
             )
             st.markdown(
