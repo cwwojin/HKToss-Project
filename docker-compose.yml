@@ -65,7 +65,7 @@ services:
         volumes:
             - ./client/.cache:/usr/src/app/.cache
         ports:
-            - 5003:8501
+            - 8501:8501
         networks:
             - local
             - mlflow-network
