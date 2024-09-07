@@ -54,6 +54,7 @@ x-airflow-common: &airflow-common
     image: airflow_image
     pull_policy: build
     environment: &airflow-common-env
+        PYTHON_ENV: $PYTHON_ENV
         AIRFLOW__CORE__EXECUTOR: CeleryExecutor
         AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
         AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
@@ -62,23 +63,12 @@ x-airflow-common: &airflow-common
         AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
         AIRFLOW__CORE__LOAD_EXAMPLES: "false"
         AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
-        # yamllint disable rule:line-length
-        # Use simple http server on scheduler for health checks
-        # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
-        # yamllint enable rule:line-length
         AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
-        # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
-        # for other purpose (development, test and especially production usage) build/extend Airflow image.
-        # _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
-        # The following line can be used to set a custom config file, stored in the local config folder
-        # If you want to use it, outcomment it and replace airflow.cfg with the name of your config file
-        # AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
     volumes:
         - ./airflow/dags:/opt/airflow/dags
         - ./airflow/logs:/opt/airflow/logs
         - ./airflow/config:/opt/airflow/config
         - ./airflow/plugins:/opt/airflow/plugins
-    env_file: .env
     user: "${AIRFLOW_UID}:0"
     depends_on: &airflow-common-depends-on
         redis:
@@ -101,6 +91,8 @@ services:
             retries: 5
             start_period: 5s
         restart: always
+        networks:
+            - airflow
 
     redis:
         # Redis is limited to 7.2-bookworm due to licencing change
@@ -115,6 +107,8 @@ services:
             retries: 50
             start_period: 30s
         restart: always
+        networks:
+            - airflow
 
     airflow-webserver:
         <<: *airflow-common
@@ -132,6 +126,8 @@ services:
             <<: *airflow-common-depends-on
             airflow-init:
                 condition: service_completed_successfully
+        networks:
+            - airflow
 
     airflow-scheduler:
         <<: *airflow-common
@@ -147,6 +143,9 @@ services:
             <<: *airflow-common-depends-on
             airflow-init:
                 condition: service_completed_successfully
+        networks:
+            - airflow
+            - mlflow-network
 
     airflow-worker:
         <<: *airflow-common
@@ -170,6 +169,9 @@ services:
             <<: *airflow-common-depends-on
             airflow-init:
                 condition: service_completed_successfully
+        networks:
+            - airflow
+            - mlflow-network
 
     airflow-triggerer:
         <<: *airflow-common
@@ -189,6 +191,9 @@ services:
             <<: *airflow-common-depends-on
             airflow-init:
                 condition: service_completed_successfully
+        networks:
+            - airflow
+            - mlflow-network
 
     airflow-init:
         <<: *airflow-common
@@ -253,6 +258,9 @@ services:
         user: "0:0"
         volumes:
             - ./airflow:/sources
+        networks:
+            - airflow
+            - mlflow-network
 
     airflow-cli:
         <<: *airflow-common
@@ -266,26 +274,27 @@ services:
             - bash
             - -c
             - airflow
+        networks:
+            - airflow
+            - mlflow-network
 
-    # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up
-    # or by explicitly targeted on the command line e.g. docker-compose up flower.
-    # See: https://docs.docker.com/compose/profiles/
-    flower:
-        <<: *airflow-common
-        command: celery flower
-        profiles:
-            - all
-            - flower
+    mongodb:
+        image: mongo:8.0.0-rc20-noble
+        container_name: mongodb
         ports:
-            - "5555:5555"
-        healthcheck:
-            test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
-            interval: 30s
-            timeout: 10s
-            retries: 5
-            start_period: 30s
-        restart: always
-        depends_on:
-            <<: *airflow-common-depends-on
-            airflow-init:
-                condition: service_completed_successfully
+            - 27017:27017
+        volumes:
+            - .mongo-data:/data
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: mongouser
+            MONGO_INITDB_ROOT_PASSWORD: mongopassword
+        networks:
+            - airflow
+        profiles:
+            - dev
+
+networks:
+    airflow:
+    mlflow-network:
+        name: mlflow-network
+        external: true

@@ -129,9 +129,7 @@ with DAG(
                     for task in tasks:
                         previous_task >> task
 
-                previous_task = tasks[
-                    -1
-                ]  # 마지막 병렬 작업을 다음의 이전 작업으로 설정
+                previous_task = tasks[-1]  # 마지막 병렬 작업을 다음의 이전 작업으로 설정
 
         # 모델 그룹이 순차적으로 실행되도록 설정
         load_dataset_task >> model_group
