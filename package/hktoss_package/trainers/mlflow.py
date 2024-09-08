@@ -17,13 +17,21 @@ from imblearn.over_sampling import SMOTENC, RandomOverSampler
 from imblearn.under_sampling import RandomUnderSampler
 from mlflow.client import MlflowClient
 from pandas import DataFrame
-from sklearn.metrics import classification_report, f1_score, make_scorer, roc_auc_score
+from sklearn.metrics import (
+    classification_report,
+    f1_score,
+    make_scorer,
+    roc_auc_score,
+    roc_curve,
+)
 from sklearn.model_selection import (
     GridSearchCV,
     TunedThresholdClassifierCV,
+    FixedThresholdClassifier,
     train_test_split,
 )
 from yacs.config import CfgNode as CN
+
 
 MODEL_IMPROVEMENT_THR = 1e-4
 SAMPLER_TARGETS = {
@@ -48,30 +56,11 @@ def positive_recall(y_true, y_pred):
     ]["recall"]
 
 
-def weighted_f1_custom(y_true, y_pred):
-    cls_report = classification_report(
-        y_true, y_pred, target_names=[0, 1], output_dict=True
-    )
-    precision = cls_report[1]["precision"]
-    recall = cls_report[1]["recall"]
-    divisor = (precision * CUSTOM_PR_WEIGHTS["precision"]) + (
-        recall * CUSTOM_PR_WEIGHTS["recall"]
-    )
-    score = (
-        (
-            2
-            * (
-                precision
-                * CUSTOM_PR_WEIGHTS["precision"]
-                * recall
-                * CUSTOM_PR_WEIGHTS["recall"]
-            )
-            / divisor
-        )
-        if divisor > 0
-        else 0
-    )
-    return score
+def JStatistic(y_true, y_pred_scores):
+    fpr, tpr, thr = roc_curve(y_true, y_pred_scores[:, -1])
+    jstats = tpr - fpr
+    optim_thr = thr[np.argmax(jstats)]
+    return optim_thr
 
 
 class MLFlowTrainer:
@@ -312,7 +301,7 @@ class MLFlowTrainer:
                     "recall_true": make_scorer(score_func=positive_recall),
                     "roc_auc_score": "roc_auc",
                 },
-                refit="recall_true",
+                refit="roc_auc_score",
                 verbose=1,
                 n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
             )
@@ -324,12 +313,12 @@ class MLFlowTrainer:
             # Save only the best estimator
             self.model.pipeline = search.best_estimator_
 
-            # 2. Fit - Tune Threshold CV
-            if self.config.TUNE_THRESHOLD:
+            # 2. Fit - Tune Threshold CV / Fixed Threshold (J-Statitstic)
+            if self.config.TUNE_THRESHOLD == "tuner":
+
                 tuned_model = TunedThresholdClassifierCV(
                     search.best_estimator_,
                     scoring=make_scorer(score_func=positive_f1),
-                    # scoring="balanced_accuracy",
                     store_cv_results=True,
                     random_state=self.config.DATASET.RANDOM_STATE,
                     n_jobs=os.cpu_count() if self.config.MULTIPROCESSING else None,
@@ -358,6 +347,26 @@ class MLFlowTrainer:
 
                 registry_dict = search.best_params_
                 registry_dict["classifier__threshold"] = tuned_model.best_threshold_
+
+            elif self.config.TUNE_THRESHOLD == "jstat":
+
+                tuned_model = FixedThresholdClassifier(
+                    search.best_estimator_,
+                    threshold=JStatistic(y, search.best_estimator_.predict_proba(X)),
+                ).fit(X, y)
+
+                print(
+                    f"[FixedThresholdClassifier] Cut-off point found at {tuned_model.threshold:.3f}"
+                )
+
+                self.model.pipeline = tuned_model
+
+                # Log best threshold
+                mlflow.log_params({"tuned_threshold": tuned_model.threshold})
+                mlflow.log_metrics({"tuned_threshold": tuned_model.threshold})
+
+                registry_dict = search.best_params_
+                registry_dict["classifier__threshold"] = tuned_model.threshold
 
             # Log model & experiment info
             mlflow.log_params(dict(self.config))

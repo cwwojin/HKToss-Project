@@ -1,9 +1,7 @@
-import time
-from pymongo import MongoClient
-from dotenv import load_dotenv
 import os
+import time
 
-load_dotenv()
+from pymongo import MongoClient
 
 
 def poll_mongo_collection(last_checked_id=None):

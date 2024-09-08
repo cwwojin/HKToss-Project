@@ -19,7 +19,7 @@ class Config(BaseSettings):
     aws_secret_access_key: str | None = os.environ.get("AWS_SECRET_ACCESS_KEY")
     aws_default_region: str | None = os.environ.get("AWS_DEFAULT_REGION")
     aws_bucket_name: str | None = os.environ.get("AWS_BUCKET_NAME")
-    s3_endpoint: str | None = os.environ.get("MLFLOW_S3_ENDPOINT_UR")
+    s3_endpoint: str | None = os.environ.get("MLFLOW_S3_ENDPOINT_URL")
 
 
 config = Config()
