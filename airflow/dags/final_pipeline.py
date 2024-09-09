@@ -1,23 +1,32 @@
-from datetime import datetime, timedelta
-from airflow import DAG
 import os
+import os.path as path
+from datetime import datetime, timedelta
+
+from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
-from airflow.models import Variable
-
-from data.import_to_mongo import _import_data
-from data.poll_collection import poll_mongo_collection
-from data.fetch_data import _fetch_data
-from data.load_dataset import load_dataset
-from data.run_experiment import _run_experiment
 from data.combine_data import _combine_batches
+from data.fetch_data import _fetch_data
+from data.import_to_mongo import _import_data
+from data.load_dataset import load_dataset
+from data.poll_collection import poll_mongo_collection
+from data.run_experiment import _run_experiment
+from dotenv import load_dotenv
+
+from airflow import DAG
+
+os.chdir(path.dirname(__file__))
+env_path = (
+    ".development.env" if os.environ.get("PYTHON_ENV") == "development" else ".env"
+)
+load_dotenv(f"../{env_path}", override=True)
 
 samplers = [
     "composite",
-    # None,
-    # "over_smote",
-    # "over_random",
-    # "under_random",
+    None,
+    "over_smote",
+    "over_random",
+    "under_random",
 ]
 models = ["lightgbm", "catboost", "xgboost", "randomforest", "logistic", "mlp"]
 
@@ -26,7 +35,7 @@ models = ["lightgbm", "catboost", "xgboost", "randomforest", "logistic", "mlp"]
 def get_csv_file_path(**kwargs):
     # 현재 날짜를 기반으로 요일을 구함 (일요일=0, ..., 토요일=6)
     day_of_week = datetime.now().weekday()
-    file_path = f"/opt/airflow/dags/data/.tmp/dataset_train_sub_split_{(day_of_week + 1) % 7}.csv"
+    file_path = f"data/.tmp/dataset_train_sub_split_{(day_of_week + 1) % 7}.csv"
 
     # 파일 존재 여부 확인
     if not os.path.exists(file_path):

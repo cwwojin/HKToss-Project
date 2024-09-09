@@ -1,10 +1,8 @@
-from pymongo import MongoClient
-import pickle
-import pandas as pd
 import os
-from dotenv import load_dotenv
+import pickle
 
-load_dotenv()
+import pandas as pd
+from pymongo import MongoClient
 
 
 def _fetch_data():

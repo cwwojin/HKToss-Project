@@ -3,10 +3,14 @@ import os.path as path
 import platform
 from datetime import datetime
 
-# # 환경변수 설정
+# 환경변수 설정
 from dotenv import load_dotenv
 
-load_dotenv(".env")
+env_path = (
+    ".development.env" if os.environ.get("PYTHON_ENV") == "development" else ".env"
+)
+load_dotenv(path.join(path.dirname(__file__), f"../{env_path}"), override=True)
+
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -16,7 +20,7 @@ from PIL import Image
 from streamlit_cookies_controller import CookieController
 
 controller = CookieController()
-from utils import APIHelper, load_demo_data, load_total_data, download_data
+from utils import APIHelper, download_data, load_demo_data, load_total_data
 
 # API Helper
 api = APIHelper(

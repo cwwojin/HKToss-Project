@@ -1,15 +1,9 @@
-from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
+from hktoss_package.models.base import BaseSKLearnPipeline
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from xgboost import XGBClassifier
-
-
-class XGBClassifierModel(BaseSKLearnModel):
-    def __init__(self, model_name: str):
-        super().__init__(model_name)
-        self.model = XGBClassifier()
 
 
 class XGBPipeline(BaseSKLearnPipeline):

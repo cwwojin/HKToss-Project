@@ -1,6 +1,7 @@
 import os
-import pandas as pd
 from datetime import datetime
+
+import pandas as pd
 
 
 def _combine_batches():

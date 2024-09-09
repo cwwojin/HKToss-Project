@@ -53,16 +53,17 @@ _C.RANDOMFOREST.class_weight = [
 
 # XGBoost
 _C.XGBOOST = CN()
-# _C.XGBOOST.booster = ["gbtree", "gblinear"]
-_C.XGBOOST.n_estimators = [200]
+_C.XGBOOST.n_estimators = [100]
 _C.XGBOOST.max_depth = [6]
-_C.XGBOOST.learning_rate = [0.1]
-_C.XGBOOST.subsample = [0.8]
+_C.XGBOOST.learning_rate = [0.3]
+_C.XGBOOST.subsample = [1.0]
 _C.XGBOOST.scale_pos_weight = [
-    1,
-    # 2,
-    # 5,
+    # 1,
+    3,
 ]  # 불균형 데이터 처리를 위한 가중치 옵션 추가: 양성 클래스에 가중치
+_C.XGBOOST.reg_lambda = [1.1]
+_C.XGBOOST.reg_alpha = [0.1]
+_C.XGBOOST.gamma = [0.1]
 
 
 # LightGBM
@@ -102,7 +103,7 @@ _C.PCA = CN()
 _C.PCA.N_COMPONENTS = ["mle"]
 
 # Threshold Search
-_C.TUNE_THRESHOLD = True
+_C.TUNE_THRESHOLD = "jstat"  # tuner | jstat | None
 
 # Logger
 _C.LOGGER = CN()
