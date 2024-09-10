@@ -1,15 +1,9 @@
-from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
+from hktoss_package.models.base import BaseSKLearnPipeline
 from lightgbm import LGBMClassifier
+from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-
-
-class LGBMClassifierModel(BaseSKLearnModel):
-    def __init__(self, model_name: str):
-        super().__init__(model_name)
-        self.model = LGBMClassifier()
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
 class LGBMPipeline(BaseSKLearnPipeline):

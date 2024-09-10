@@ -1,14 +1,8 @@
-from hktoss_package.models.base import BaseSKLearnModel, BaseSKLearnPipeline
+from hktoss_package.models.base import BaseSKLearnPipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-
-
-class MLPClassifierModel(BaseSKLearnModel):
-    def __init__(self, model_name: str):
-        super().__init__(model_name)
-        self.model = MLPClassifier()
 
 
 class MLPPipeline(BaseSKLearnPipeline):

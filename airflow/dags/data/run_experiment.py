@@ -1,15 +1,9 @@
-from hktoss_package.trainers import MLFlowTrainer
-from hktoss_package.config import get_cfg_defaults
-import pandas as pd
-from datetime import datetime
 import os
+from datetime import datetime
 
-from dotenv import load_dotenv
-
-env_path = (
-    ".development.env" if os.environ.get("PYTHON_ENV") == "development" else ".env"
-)
-load_dotenv(env_path)
+import pandas as pd
+from hktoss_package.config import get_cfg_defaults
+from hktoss_package.trainers import MLFlowTrainer
 
 
 def _run_experiment(**kwargs):

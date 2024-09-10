@@ -8,6 +8,9 @@ RUN pip install -r requirements.txt
 COPY ./package /opt/airflow/package
 RUN pip install -e /opt/airflow/package/
 
+COPY .development.env /opt/airflow
+COPY .env /opt/airflow
+
 USER root
 RUN apt-get update && apt-get install -y libgomp1
 USER airflow
