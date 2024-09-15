@@ -6,3 +6,7 @@ scikit-learn
 pandas
 python-dotenv
 requests
+seaborn
+xgboost
+catboost
+lightgbm
